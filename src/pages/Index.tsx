@@ -20,7 +20,7 @@ const features = [
   },
   {
     icon: Award,
-    title: "15+ лет опыта",
+    title: "С 2021 года",
     description: "Надежный партнер для крупнейших предприятий отрасли",
   },
   {
@@ -70,23 +70,22 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-gradient-hero">
-        <div className="absolute inset-0 bg-hero-pattern opacity-30" />
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <div
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0"
           style={{
             backgroundImage: `url(${heroImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary/90 via-secondary/70 to-secondary/40" />
         
         <div className="container relative z-10 py-20 lg:py-32">
           <div className="max-w-3xl animate-fade-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 text-primary mb-6">
               <CheckCircle className="h-4 w-4" />
-              <span className="text-sm font-medium">Надежный партнер с 2008 года</span>
+              <span className="text-sm font-medium">Надежный партнер с 2021 года</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary-foreground leading-tight mb-6">
@@ -189,8 +188,8 @@ const Index = () => {
                   <div className="text-muted-foreground">Выполненных проектов</div>
                 </div>
                 <div className="p-6 rounded-xl bg-secondary text-secondary-foreground shadow-card">
-                  <div className="text-4xl font-display font-bold mb-2">15</div>
-                  <div className="text-secondary-foreground/80">Лет на рынке</div>
+                  <div className="text-4xl font-display font-bold mb-2">с 2021</div>
+                  <div className="text-secondary-foreground/80">Года на рынке</div>
                 </div>
               </div>
               <div className="space-y-4 pt-8">

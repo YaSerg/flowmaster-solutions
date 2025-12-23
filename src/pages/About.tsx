@@ -5,10 +5,9 @@ import Layout from "@/components/layout/Layout";
 import heroImage from "@/assets/hero-valve.jpg";
 
 const milestones = [
-  { year: "2008", title: "Основание компании", description: "Начало работы в сфере поставок промышленной арматуры" },
-  { year: "2012", title: "Первый крупный контракт", description: "Поставка оборудования для нефтеперерабатывающего завода" },
-  { year: "2016", title: "Открытие производства", description: "Запуск собственной производственной площадки" },
-  { year: "2020", title: "Расширение географии", description: "Выход на рынки СНГ и ближнего зарубежья" },
+  { year: "2021", title: "Основание компании", description: "Начало работы в сфере поставок промышленной арматуры" },
+  { year: "2022", title: "Первый крупный контракт", description: "Поставка оборудования для нефтеперерабатывающего завода" },
+  { year: "2023", title: "Расширение ассортимента", description: "Добавление новых линеек регулирующей арматуры" },
   { year: "2024", title: "Новый этап развития", description: "Модернизация склада и расширение ассортимента" },
 ];
 
@@ -60,11 +59,11 @@ const About = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <h2 className="text-3xl font-display font-bold text-foreground mb-6">
-                Более 15 лет на рынке промышленного оборудования
+                На рынке промышленного оборудования с 2021 года
               </h2>
               <div className="space-y-4 text-muted-foreground leading-relaxed">
                 <p>
-                  Компания «Торговый Дом Импульс» была основана в 2008 году и за это время 
+                  Компания «Торговый Дом Импульс» была основана в 2021 году и за это время 
                   зарекомендовала себя как надежный поставщик трубопроводной арматуры для 
                   предприятий нефтегазовой, энергетической и химической промышленности.
                 </p>
@@ -98,8 +97,8 @@ const About = () => {
                 className="rounded-xl shadow-industrial w-full"
               />
               <div className="absolute -bottom-6 -right-6 p-6 rounded-xl bg-primary text-primary-foreground shadow-lg hidden lg:block">
-                <div className="text-4xl font-display font-bold">15+</div>
-                <div className="text-sm text-primary-foreground/80">лет на рынке</div>
+                <div className="text-4xl font-display font-bold">с 2021</div>
+                <div className="text-sm text-primary-foreground/80">года на рынке</div>
               </div>
             </div>
           </div>
