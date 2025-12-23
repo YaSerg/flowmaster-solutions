@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Phone, Clock } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Footer = () => {
@@ -67,17 +67,13 @@ const Footer = () => {
                 <Phone className="h-4 w-4 mt-0.5 text-primary" />
                 +7-996-613-88-52
               </a>
-              <a
-                href="mailto:info@oootdi.ru"
+              <Link
+                to="/contacts"
                 className="flex items-start gap-3 text-sm text-secondary-foreground/70 hover:text-primary transition-colors"
               >
-                <Mail className="h-4 w-4 mt-0.5 text-primary" />
-                info@oootdi.ru
-              </a>
-              <div className="flex items-start gap-3 text-sm text-secondary-foreground/70">
                 <Clock className="h-4 w-4 mt-0.5 text-primary" />
-                Пн-Пт: 9:00 - 18:00
-              </div>
+                Связаться с нами
+              </Link>
             </div>
           </div>
         </div>

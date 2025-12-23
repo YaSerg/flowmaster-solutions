@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Phone, Mail, Clock, MapPin, Send, Paperclip, X, RefreshCw, CheckCircle } from "lucide-react";
+import { Phone, Clock, Send, Paperclip, X, RefreshCw, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/layout/Layout";
 
@@ -192,19 +192,6 @@ const Contacts = () => {
                   </div>
                 </a>
                 
-                <a
-                  href="mailto:info@oootdi.ru"
-                  className="flex items-start gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/30 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Mail className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Email</div>
-                    <div className="font-semibold text-foreground">info@oootdi.ru</div>
-                  </div>
-                </a>
-                
                 <div className="flex items-start gap-4 p-4 rounded-lg bg-card border border-border">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Clock className="h-5 w-5 text-primary" />
@@ -212,16 +199,6 @@ const Contacts = () => {
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">Режим работы</div>
                     <div className="font-semibold text-foreground">Пн-Пт: 9:00 - 18:00</div>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4 p-4 rounded-lg bg-card border border-border">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Адрес</div>
-                    <div className="font-semibold text-foreground">Россия, г. Москва</div>
                   </div>
                 </div>
               </div>
