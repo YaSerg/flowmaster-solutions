@@ -83,11 +83,9 @@ const Footer = () => {
           <p className="text-sm text-secondary-foreground/60">
             © {new Date().getFullYear()} ООО "Торговый Дом Импульс". Все права защищены.
           </p>
-          <div className="flex gap-4">
-            <Link to="/contacts" className="text-sm text-secondary-foreground/60 hover:text-primary transition-colors">
-              Политика конфиденциальности
-            </Link>
-          </div>
+          <Link to="/admin" className="text-xs text-secondary-foreground/40 hover:text-secondary-foreground/60 transition-colors">
+            Вход для сотрудников
+          </Link>
         </div>
       </div>
     </footer>

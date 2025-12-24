@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Filter } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { useSEO } from "@/hooks/useSEO";
 import productControlValve from "@/assets/product-control-valve.jpg";
 import productBallValve from "@/assets/product-ball-valve.jpg";
 import productButterflyValve from "@/assets/product-butterfly-valve.jpg";
@@ -87,6 +88,13 @@ const products = [
 ];
 
 const Products = () => {
+  useSEO({
+    title: "Клапаны регулирующие, клапаны отсечные, задвижки, запорные клапаны",
+    description: "Широкий ассортимент трубопроводной арматуры: клапаны регулирующие, отсечные, запорные, задвижки, шаровые краны для нефтегазовой, энергетической и химической промышленности",
+    keywords: "клапаны регулирующие, клапаны отсечные, задвижки, запорные клапаны, шаровые краны, дисковые затворы, трубопроводная арматура",
+    canonical: "https://oootdi.ru/products",
+  });
+
   const [activeCategory, setActiveCategory] = useState("all");
 
   const filteredProducts = activeCategory === "all"

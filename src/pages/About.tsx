@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Building2, Users, Globe, Award } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { useSEO } from "@/hooks/useSEO";
 import heroImage from "@/assets/hero-valve.jpg";
 
 const milestones = [
@@ -35,6 +36,13 @@ const values = [
 ];
 
 const About = () => {
+  useSEO({
+    title: "О компании ООО ТДИ",
+    description: "ООО Торговый Дом Импульс — надежный партнер в сфере комплексных поставок трубопроводной арматуры для промышленных предприятий России и СНГ с 2021 года",
+    keywords: "о компании ТДИ, Торговый Дом Импульс, поставки арматуры, промышленное оборудование",
+    canonical: "https://oootdi.ru/about",
+  });
+
   return (
     <Layout>
       {/* Hero */}
