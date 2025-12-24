@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Phone, Clock, Send, Paperclip, X, RefreshCw, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSEO } from "@/hooks/useSEO";
 import Layout from "@/components/layout/Layout";
 
 const generateCaptcha = () => {
@@ -17,6 +18,13 @@ const generateCaptcha = () => {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const Contacts = () => {
+  useSEO({
+    title: "Контакты ООО ТДИ",
+    description: "Свяжитесь с ООО Торговый Дом Импульс для консультации или отправьте запрос на поставку трубопроводной арматуры",
+    keywords: "контакты ТДИ, связаться, заказать арматуру, консультация",
+    canonical: "https://oootdi.ru/contacts",
+  });
+
   const [searchParams] = useSearchParams();
   const productFromUrl = searchParams.get("product");
   
@@ -198,7 +206,7 @@ const Contacts = () => {
                   </div>
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">Режим работы</div>
-                    <div className="font-semibold text-foreground">Пн-Пт: 9:00 - 18:00</div>
+                    <div className="font-semibold text-foreground">Пн-Пт: 8:00 - 17:00</div>
                   </div>
                 </div>
               </div>

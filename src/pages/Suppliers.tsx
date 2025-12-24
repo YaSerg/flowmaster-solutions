@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Handshake, FileText, TrendingUp, Shield } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { useSEO } from "@/hooks/useSEO";
 
 const benefits = [
   {
@@ -50,6 +51,13 @@ const cooperationTypes = [
 ];
 
 const Suppliers = () => {
+  useSEO({
+    title: "Стать партнером ООО ТДИ",
+    description: "Приглашаем производителей и поставщиков трубопроводной арматуры к взаимовыгодному сотрудничеству с ООО Торговый Дом Импульс",
+    keywords: "партнерство ТДИ, поставщики арматуры, сотрудничество, производители клапанов",
+    canonical: "https://oootdi.ru/suppliers",
+  });
+
   return (
     <Layout>
       {/* Hero */}
@@ -152,11 +160,10 @@ const Suppliers = () => {
               </h3>
               <p className="text-secondary-foreground/80 mb-6">
                 Отправьте коммерческое предложение с описанием вашей продукции, 
-                прайс-листом и контактными данными. Мы рассмотрим заявку в течение 
-                3 рабочих дней.
+                прайс-листом и контактными данными через форму обратной связи. 
+                Мы рассмотрим заявку в течение 3 рабочих дней.
               </p>
               <div className="space-y-3 text-secondary-foreground/80 mb-8">
-                <p><strong>Email:</strong> info@oootdi.ru</p>
                 <p><strong>Телефон:</strong> +7-996-613-88-52</p>
               </div>
               <Button asChild size="lg">

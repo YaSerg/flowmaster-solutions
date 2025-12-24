@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, ArrowRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { useSEO } from "@/hooks/useSEO";
 import projectRefinery from "@/assets/project-refinery.jpg";
 import projectPowerplant from "@/assets/project-powerplant.jpg";
 import projectChemical from "@/assets/project-chemical.jpg";
@@ -72,6 +73,13 @@ const projects = [
 ];
 
 const Projects = () => {
+  useSEO({
+    title: "Выполненные проекты ООО ТДИ",
+    description: "Реализованные поставки трубопроводной арматуры для крупнейших предприятий нефтегазовой, энергетической и химической промышленности",
+    keywords: "проекты ТДИ, поставки арматуры, нефтегазовая отрасль, энергетика, химическая промышленность",
+    canonical: "https://oootdi.ru/projects",
+  });
+
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedProject, setSelectedProject] = useState<typeof projects[0] | null>(null);
 

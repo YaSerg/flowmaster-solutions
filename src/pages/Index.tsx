@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Truck, Award, CheckCircle, Phone, Clock, Wrench } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { useSEO } from "@/hooks/useSEO";
 import heroImage from "@/assets/hero-valve.jpg";
 import projectRefinery from "@/assets/project-refinery.jpg";
 import projectPowerplant from "@/assets/project-powerplant.jpg";
@@ -67,6 +68,13 @@ const news = [
 ];
 
 const Index = () => {
+  useSEO({
+    title: "Трубопроводная арматура ООО ТДИ",
+    description: "ООО Торговый Дом Импульс — комплексные поставки и производство трубопроводной арматуры: клапаны регулирующие, отсечные, запорные, задвижки для нефтегазовой и энергетической отрасли",
+    keywords: "трубопроводная арматура, клапаны регулирующие, клапаны отсечные, задвижки, запорные клапаны, ТДИ, Торговый Дом Импульс",
+    canonical: "https://oootdi.ru/",
+  });
+
   return (
     <Layout>
       {/* Hero Section */}
