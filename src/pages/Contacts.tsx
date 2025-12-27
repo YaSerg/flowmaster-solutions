@@ -8,6 +8,7 @@ import { Phone, Clock, Send, Paperclip, X, RefreshCw, CheckCircle } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import Layout from "@/components/layout/Layout";
+import { supabase } from "@/integrations/supabase/client";
 
 const generateCaptcha = () => {
   const num1 = Math.floor(Math.random() * 10) + 1;
@@ -108,16 +109,62 @@ const Contacts = () => {
 
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    
-    toast({
-      title: "Сообщение отправлено!",
-      description: "Мы свяжемся с вами в ближайшее время",
-    });
+    try {
+      let attachmentUrl: string | null = null;
+      let attachmentName: string | null = null;
+
+      // Upload file if exists
+      if (files.length > 0) {
+        const file = files[0];
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("attachments")
+          .upload(fileName, file);
+
+        if (uploadError) {
+          throw new Error("Ошибка загрузки файла: " + uploadError.message);
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("attachments")
+          .getPublicUrl(fileName);
+
+        attachmentUrl = urlData.publicUrl;
+        attachmentName = file.name;
+      }
+
+      // Save lead to database
+      const { error: insertError } = await supabase.from("leads").insert({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        company: formData.company || null,
+        subject: formData.subject || null,
+        message: formData.message,
+        attachment_url: attachmentUrl,
+        attachment_name: attachmentName,
+      });
+
+      if (insertError) {
+        throw new Error("Ошибка сохранения заявки: " + insertError.message);
+      }
+
+      setIsSubmitted(true);
+      toast({
+        title: "Сообщение отправлено!",
+        description: "Мы свяжемся с вами в ближайшее время",
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : "Произошла ошибка",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
