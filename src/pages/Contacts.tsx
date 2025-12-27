@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Phone, Clock, Send, Paperclip, X, RefreshCw, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
-import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 
 const generateCaptcha = () => {
@@ -109,86 +108,16 @@ const Contacts = () => {
 
     setIsSubmitting(true);
     
-    try {
-      let attachmentUrl: string | undefined;
-      let attachmentName: string | undefined;
-
-      // Upload file if exists
-      if (files.length > 0) {
-        const file = files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('attachments')
-          .upload(fileName, file);
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw new Error('Ошибка загрузки файла');
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('attachments')
-          .getPublicUrl(fileName);
-
-        attachmentUrl = publicUrl;
-        attachmentName = file.name;
-      }
-
-      // Save lead to database
-      const { error: insertError } = await supabase
-        .from('leads')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          company: formData.company || null,
-          subject: formData.subject || null,
-          message: formData.message,
-          attachment_url: attachmentUrl || null,
-          attachment_name: attachmentName || null,
-        });
-
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        throw new Error('Ошибка сохранения заявки');
-      }
-
-      // Send email notification
-      const { error: emailError } = await supabase.functions.invoke('send-lead-notification', {
-        body: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          company: formData.company,
-          subject: formData.subject,
-          message: formData.message,
-          attachment_url: attachmentUrl,
-          attachment_name: attachmentName,
-        },
-      });
-
-      if (emailError) {
-        console.error('Email error:', emailError);
-        // Don't throw - lead is saved, email is secondary
-      }
-
-      setIsSubmitted(true);
-      toast({
-        title: "Сообщение отправлено!",
-        description: "Мы свяжемся с вами в ближайшее время",
-      });
-    } catch (error: any) {
-      console.error('Submit error:', error);
-      toast({
-        title: "Ошибка отправки",
-        description: error.message || "Попробуйте позже",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Simulate form submission
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    setIsSubmitting(false);
+    setIsSubmitted(true);
+    
+    toast({
+      title: "Сообщение отправлено!",
+      description: "Мы свяжемся с вами в ближайшее время",
+    });
   };
 
   const formatFileSize = (bytes: number) => {
@@ -370,11 +299,12 @@ const Contacts = () => {
                   
                   {/* File Upload */}
                   <div className="space-y-2">
-                    <Label>Прикрепить файл (до 10 МБ)</Label>
+                    <Label>Прикрепить файлы (до 10 МБ каждый)</Label>
                     <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
                       <input
                         ref={fileInputRef}
                         type="file"
+                        multiple
                         onChange={handleFileChange}
                         className="hidden"
                         accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip,.rar"
@@ -383,10 +313,9 @@ const Contacts = () => {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                        disabled={files.length > 0}
                       >
                         <Paperclip className="h-5 w-5" />
-                        <span>{files.length > 0 ? 'Файл выбран' : 'Выбрать файл'}</span>
+                        <span>Выбрать файлы</span>
                       </button>
                       
                       {files.length > 0 && (
