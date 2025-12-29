@@ -30,7 +30,10 @@ const Admin = () => {
     canonical: "https://oootdi.ru/admin",
   });
 
-  const { user, isAdmin, loading, signIn, signOut } = useAuth();
+  const { user, loading, signIn, signOut } = useAuth();
+  
+  // Check if user is admin by email
+  const isAdmin = user?.email === "info@oootdi.ru";
   const { toast } = useToast();
 
   // Auth state
