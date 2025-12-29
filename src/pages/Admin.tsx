@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
-import { LogOut, Trash2, Download, RefreshCw, Eye, Lock, Loader2 } from "lucide-react";
+import { 
+  LogOut, Trash2, Download, RefreshCw, Eye, Lock, Loader2, 
+  Search, Users, Plus, X, RotateCcw, Archive 
+} from "lucide-react";
 
 interface Lead {
   id: string;
@@ -21,7 +24,17 @@ interface Lead {
   attachment_url: string | null;
   attachment_name: string | null;
   created_at: string;
+  is_read: boolean;
+  is_deleted: boolean;
 }
+
+interface StaffUser {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
+const MAIN_ADMIN_EMAIL = "info@oootdi.ru";
 
 const Admin = () => {
   useSEO({
@@ -31,10 +44,14 @@ const Admin = () => {
   });
 
   const { user, loading, signIn, signOut } = useAuth();
-  
-  // Check if user is admin by email
-  const isAdmin = user?.email === "info@oootdi.ru";
   const { toast } = useToast();
+
+  // Access control state
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [accessLoading, setAccessLoading] = useState(true);
+
+  // Check if user is main admin
+  const isMainAdmin = user?.email === MAIN_ADMIN_EMAIL;
 
   // Auth state
   const [email, setEmail] = useState("");
@@ -45,6 +62,10 @@ const Admin = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [leadsLoading, setLeadsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"active" | "deleted">("active");
+
+  // Search/filter state
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Password change state
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -55,9 +76,54 @@ const Admin = () => {
   // Selected lead for preview
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
 
+  // Staff management state
+  const [showStaffManagement, setShowStaffManagement] = useState(false);
+  const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [newStaffEmail, setNewStaffEmail] = useState("");
+  const [addingStaff, setAddingStaff] = useState(false);
+
+  // Check if user is authorized (main admin or in staff_users table)
+  const checkAuthorization = async () => {
+    if (!user) {
+      setIsAuthorized(false);
+      setAccessLoading(false);
+      return;
+    }
+
+    // Main admin always authorized
+    if (user.email === MAIN_ADMIN_EMAIL) {
+      setIsAuthorized(true);
+      setAccessLoading(false);
+      return;
+    }
+
+    // Check if user is in staff_users table
+    // Using any to bypass TypeScript since staff_users is not in generated types
+    const { data, error } = await (supabase as any)
+      .from("staff_users")
+      .select("email")
+      .eq("email", user.email)
+      .maybeSingle();
+
+    if (!error && data) {
+      setIsAuthorized(true);
+    } else {
+      setIsAuthorized(false);
+    }
+    setAccessLoading(false);
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      checkAuthorization();
+    }
+  }, [user, loading]);
+
   const fetchLeads = async () => {
     setLeadsLoading(true);
-    const { data, error } = await supabase
+    // Using any to bypass TypeScript since is_read/is_deleted are not in generated types
+    const { data, error } = await (supabase as any)
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -69,16 +135,62 @@ const Admin = () => {
         variant: "destructive",
       });
     } else {
-      setLeads(data || []);
+      setLeads((data || []) as Lead[]);
     }
     setLeadsLoading(false);
   };
 
-  useEffect(() => {
-    if (user && isAdmin) {
-      fetchLeads();
+  const fetchStaffUsers = async () => {
+    setStaffLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("staff_users")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({
+        title: "Ошибка загрузки сотрудников",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setStaffUsers((data || []) as StaffUser[]);
     }
-  }, [user, isAdmin]);
+    setStaffLoading(false);
+  };
+
+  useEffect(() => {
+    if (user && isAuthorized) {
+      fetchLeads();
+      if (isMainAdmin) {
+        fetchStaffUsers();
+      }
+    }
+  }, [user, isAuthorized, isMainAdmin]);
+
+  // Mark lead as read
+  const markAsRead = async (leadId: string) => {
+    const { error } = await (supabase as any)
+      .from("leads")
+      .update({ is_read: true })
+      .eq("id", leadId);
+
+    if (!error) {
+      setLeads((prev) =>
+        prev.map((lead) =>
+          lead.id === leadId ? { ...lead, is_read: true } : lead
+        )
+      );
+    }
+  };
+
+  // Open lead preview and mark as read
+  const openLeadPreview = async (lead: Lead) => {
+    setPreviewLead(lead);
+    if (!lead.is_read) {
+      await markAsRead(lead.id);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +208,7 @@ const Admin = () => {
 
   const handleLogout = async () => {
     await signOut();
+    setIsAuthorized(false);
     toast({ title: "Вы вышли из системы" });
   };
 
@@ -109,15 +222,60 @@ const Admin = () => {
     setSelectedLeads(newSelected);
   };
 
-  const toggleAllLeads = () => {
-    if (selectedLeads.size === leads.length) {
+  const toggleAllLeads = (filteredLeads: Lead[]) => {
+    if (selectedLeads.size === filteredLeads.length && filteredLeads.length > 0) {
       setSelectedLeads(new Set());
     } else {
-      setSelectedLeads(new Set(leads.map((l) => l.id)));
+      setSelectedLeads(new Set(filteredLeads.map((l) => l.id)));
     }
   };
 
-  const deleteSelectedLeads = async () => {
+  // Soft delete - set is_deleted = true
+  const softDeleteSelectedLeads = async () => {
+    if (selectedLeads.size === 0) return;
+
+    const { error } = await (supabase as any)
+      .from("leads")
+      .update({ is_deleted: true })
+      .in("id", Array.from(selectedLeads));
+
+    if (error) {
+      toast({
+        title: "Ошибка удаления",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: `Удалено заявок: ${selectedLeads.size}` });
+      setSelectedLeads(new Set());
+      fetchLeads();
+    }
+  };
+
+  // Restore deleted leads
+  const restoreSelectedLeads = async () => {
+    if (selectedLeads.size === 0) return;
+
+    const { error } = await (supabase as any)
+      .from("leads")
+      .update({ is_deleted: false })
+      .in("id", Array.from(selectedLeads));
+
+    if (error) {
+      toast({
+        title: "Ошибка восстановления",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: `Восстановлено заявок: ${selectedLeads.size}` });
+      setSelectedLeads(new Set());
+      fetchLeads();
+    }
+  };
+
+  // Permanent delete
+  const permanentDeleteSelectedLeads = async () => {
     if (selectedLeads.size === 0) return;
 
     const leadsToDelete = leads.filter((l) => selectedLeads.has(l.id));
@@ -145,9 +303,51 @@ const Admin = () => {
         variant: "destructive",
       });
     } else {
-      toast({ title: `Удалено заявок: ${selectedLeads.size}` });
+      toast({ title: `Удалено навсегда: ${selectedLeads.size}` });
       setSelectedLeads(new Set());
       fetchLeads();
+    }
+  };
+
+  // Staff management
+  const addStaffUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStaffEmail.trim()) return;
+
+    setAddingStaff(true);
+    const { error } = await (supabase as any)
+      .from("staff_users")
+      .insert({ email: newStaffEmail.trim().toLowerCase() });
+
+    if (error) {
+      toast({
+        title: "Ошибка добавления",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Сотрудник добавлен" });
+      setNewStaffEmail("");
+      fetchStaffUsers();
+    }
+    setAddingStaff(false);
+  };
+
+  const removeStaffUser = async (id: string) => {
+    const { error } = await (supabase as any)
+      .from("staff_users")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Ошибка удаления",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Сотрудник удален" });
+      fetchStaffUsers();
     }
   };
 
@@ -197,7 +397,22 @@ const Admin = () => {
     });
   };
 
-  if (loading) {
+  // Filter leads
+  const filterLeads = (leadsToFilter: Lead[]) => {
+    if (!searchQuery.trim()) return leadsToFilter;
+    
+    const query = searchQuery.toLowerCase();
+    return leadsToFilter.filter(
+      (lead) =>
+        (lead.company && lead.company.toLowerCase().includes(query)) ||
+        (lead.subject && lead.subject.toLowerCase().includes(query))
+    );
+  };
+
+  const activeLeads = filterLeads(leads.filter((l) => !l.is_deleted));
+  const deletedLeads = filterLeads(leads.filter((l) => l.is_deleted));
+
+  if (loading || accessLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -248,13 +463,13 @@ const Admin = () => {
     );
   }
 
-  // Logged in but not admin
-  if (!isAdmin) {
+  // Logged in but not authorized
+  if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Доступ запрещен</h1>
-          <p className="text-muted-foreground mb-4">У вас нет прав администратора</p>
+          <p className="text-muted-foreground mb-4">У вас нет прав доступа к админ-панели</p>
           <Button onClick={handleLogout} variant="outline">
             <LogOut className="h-4 w-4 mr-2" />
             Выйти
@@ -276,6 +491,11 @@ const Admin = () => {
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user.email}
+              {isMainAdmin && (
+                <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                  Главный админ
+                </span>
+              )}
             </span>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
@@ -292,14 +512,37 @@ const Admin = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${leadsLoading ? "animate-spin" : ""}`} />
             Обновить
           </Button>
-          <Button
-            onClick={deleteSelectedLeads}
-            variant="destructive"
-            disabled={selectedLeads.size === 0}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Удалить ({selectedLeads.size})
-          </Button>
+          
+          {activeTab === "active" ? (
+            <Button
+              onClick={softDeleteSelectedLeads}
+              variant="destructive"
+              disabled={selectedLeads.size === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Удалить ({selectedLeads.size})
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={restoreSelectedLeads}
+                variant="secondary"
+                disabled={selectedLeads.size === 0}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Восстановить ({selectedLeads.size})
+              </Button>
+              <Button
+                onClick={permanentDeleteSelectedLeads}
+                variant="destructive"
+                disabled={selectedLeads.size === 0}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Удалить навсегда ({selectedLeads.size})
+              </Button>
+            </>
+          )}
+
           <Button
             variant="secondary"
             onClick={() => setShowPasswordChange(!showPasswordChange)}
@@ -307,6 +550,29 @@ const Admin = () => {
             <Lock className="h-4 w-4 mr-2" />
             Сменить пароль
           </Button>
+
+          {isMainAdmin && (
+            <Button
+              variant="outline"
+              onClick={() => setShowStaffManagement(!showStaffManagement)}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Сотрудники
+            </Button>
+          )}
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Поиск по компании или теме..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
 
         {/* Password Change Form */}
@@ -353,79 +619,108 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Leads Table */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="p-4 text-left">
-                    <Checkbox
-                      checked={selectedLeads.size === leads.length && leads.length > 0}
-                      onCheckedChange={toggleAllLeads}
-                    />
-                  </th>
-                  <th className="p-4 text-left font-medium">Дата</th>
-                  <th className="p-4 text-left font-medium">Имя</th>
-                  <th className="p-4 text-left font-medium">Email</th>
-                  <th className="p-4 text-left font-medium">Компания</th>
-                  <th className="p-4 text-left font-medium">Тема</th>
-                  <th className="p-4 text-left font-medium">Файл</th>
-                  <th className="p-4 text-left font-medium">Действия</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                      {leadsLoading ? "Загрузка..." : "Заявок пока нет"}
-                    </td>
-                  </tr>
+        {/* Staff Management (Main Admin Only) */}
+        {isMainAdmin && showStaffManagement && (
+          <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
+            <h2 className="text-lg font-semibold mb-4">Управление сотрудниками</h2>
+            
+            <form onSubmit={addStaffUser} className="flex gap-2 mb-4">
+              <Input
+                type="email"
+                placeholder="email@example.com"
+                value={newStaffEmail}
+                onChange={(e) => setNewStaffEmail(e.target.value)}
+                required
+              />
+              <Button type="submit" disabled={addingStaff}>
+                {addingStaff ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  leads.map((lead) => (
-                    <tr key={lead.id} className="border-t border-border hover:bg-muted/50">
-                      <td className="p-4">
-                        <Checkbox
-                          checked={selectedLeads.has(lead.id)}
-                          onCheckedChange={() => toggleLeadSelection(lead.id)}
-                        />
-                      </td>
-                      <td className="p-4 whitespace-nowrap">{formatDate(lead.created_at)}</td>
-                      <td className="p-4">{lead.name}</td>
-                      <td className="p-4">{lead.email}</td>
-                      <td className="p-4">{lead.company || "—"}</td>
-                      <td className="p-4 max-w-[200px] truncate">{lead.subject || "—"}</td>
-                      <td className="p-4">
-                        {lead.attachment_url ? (
-                          <a
-                            href={lead.attachment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                          >
-                            <Download className="h-3 w-3" />
-                            {lead.attachment_name || "Файл"}
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPreviewLead(lead)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
+                  <Plus className="h-4 w-4" />
                 )}
-              </tbody>
-            </table>
+              </Button>
+            </form>
+
+            {staffLoading ? (
+              <div className="text-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+              </div>
+            ) : staffUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Сотрудников пока нет</p>
+            ) : (
+              <ul className="space-y-2">
+                {staffUsers.map((staff) => (
+                  <li
+                    key={staff.id}
+                    className="flex items-center justify-between bg-muted p-2 rounded-lg"
+                  >
+                    <span className="text-sm">{staff.email}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeStaffUser(staff.id)}
+                    >
+                      <X className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* Leads Tabs */}
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(v) => {
+            setActiveTab(v as "active" | "deleted");
+            setSelectedLeads(new Set());
+          }}
+        >
+          <TabsList className="mb-4">
+            <TabsTrigger value="active" className="gap-2">
+              Активные
+              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                {leads.filter((l) => !l.is_deleted).length}
+              </span>
+            </TabsTrigger>
+            {isMainAdmin && (
+              <TabsTrigger value="deleted" className="gap-2">
+                <Archive className="h-4 w-4" />
+                Удаленные
+                <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
+                  {leads.filter((l) => l.is_deleted).length}
+                </span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="active">
+            <LeadsTable
+              leads={activeLeads}
+              selectedLeads={selectedLeads}
+              toggleLeadSelection={toggleLeadSelection}
+              toggleAllLeads={() => toggleAllLeads(activeLeads)}
+              openLeadPreview={openLeadPreview}
+              formatDate={formatDate}
+              leadsLoading={leadsLoading}
+            />
+          </TabsContent>
+
+          {isMainAdmin && (
+            <TabsContent value="deleted">
+              <LeadsTable
+                leads={deletedLeads}
+                selectedLeads={selectedLeads}
+                toggleLeadSelection={toggleLeadSelection}
+                toggleAllLeads={() => toggleAllLeads(deletedLeads)}
+                openLeadPreview={openLeadPreview}
+                formatDate={formatDate}
+                leadsLoading={leadsLoading}
+              />
+            </TabsContent>
+          )}
+        </Tabs>
 
         {/* Lead Preview Modal */}
         {previewLead && (
@@ -473,6 +768,114 @@ const Admin = () => {
           </div>
         )}
       </main>
+    </div>
+  );
+};
+
+// Leads Table Component
+interface LeadsTableProps {
+  leads: Lead[];
+  selectedLeads: Set<string>;
+  toggleLeadSelection: (id: string) => void;
+  toggleAllLeads: () => void;
+  openLeadPreview: (lead: Lead) => void;
+  formatDate: (dateStr: string) => string;
+  leadsLoading: boolean;
+}
+
+const LeadsTable = ({
+  leads,
+  selectedLeads,
+  toggleLeadSelection,
+  toggleAllLeads,
+  openLeadPreview,
+  formatDate,
+  leadsLoading,
+}: LeadsTableProps) => {
+  return (
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted">
+            <tr>
+              <th className="p-4 text-left">
+                <Checkbox
+                  checked={selectedLeads.size === leads.length && leads.length > 0}
+                  onCheckedChange={toggleAllLeads}
+                />
+              </th>
+              <th className="p-4 text-left font-medium">Дата</th>
+              <th className="p-4 text-left font-medium">Имя</th>
+              <th className="p-4 text-left font-medium">Email</th>
+              <th className="p-4 text-left font-medium">Компания</th>
+              <th className="p-4 text-left font-medium">Тема</th>
+              <th className="p-4 text-left font-medium">Файл</th>
+              <th className="p-4 text-left font-medium">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leads.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  {leadsLoading ? "Загрузка..." : "Заявок нет"}
+                </td>
+              </tr>
+            ) : (
+              leads.map((lead) => (
+                <tr
+                  key={lead.id}
+                  className={`border-t border-border hover:bg-muted/50 transition-colors ${
+                    !lead.is_read ? "bg-primary/5 font-medium" : ""
+                  }`}
+                >
+                  <td className="p-4">
+                    <Checkbox
+                      checked={selectedLeads.has(lead.id)}
+                      onCheckedChange={() => toggleLeadSelection(lead.id)}
+                    />
+                  </td>
+                  <td className="p-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {!lead.is_read && (
+                        <span className="w-2 h-2 bg-primary rounded-full" />
+                      )}
+                      {formatDate(lead.created_at)}
+                    </div>
+                  </td>
+                  <td className="p-4">{lead.name}</td>
+                  <td className="p-4">{lead.email}</td>
+                  <td className="p-4">{lead.company || "—"}</td>
+                  <td className="p-4 max-w-[200px] truncate">{lead.subject || "—"}</td>
+                  <td className="p-4">
+                    {lead.attachment_url ? (
+                      <a
+                        href={lead.attachment_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                      >
+                        <Download className="h-3 w-3" />
+                        {lead.attachment_name || "Файл"}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="p-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openLeadPreview(lead)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
