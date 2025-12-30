@@ -567,7 +567,7 @@ const Admin = () => {
               <Trash2 className="h-4 w-4 mr-2" />
               Удалить ({selectedLeads.size})
             </Button>
-          ) : (
+          ) : isMainAdmin ? (
             <>
               <Button
                 onClick={restoreSelectedLeads}
@@ -586,7 +586,7 @@ const Admin = () => {
                 Удалить навсегда ({selectedLeads.size})
               </Button>
             </>
-          )}
+          ) : null}
 
           <Button
             variant="secondary"
@@ -669,6 +669,14 @@ const Admin = () => {
           <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
             <h2 className="text-lg font-semibold mb-4">Управление сотрудниками</h2>
             
+            {/* Email confirmation notice */}
+            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                <strong>Совет:</strong> Чтобы сотрудники могли входить сразу без подтверждения email, 
+                отключите «Confirm Email» в настройках Lovable Cloud (Auth → Settings).
+              </p>
+            </div>
+            
             <form onSubmit={addStaffUser} className="space-y-3 mb-4">
               <Input
                 type="email"
@@ -737,16 +745,20 @@ const Admin = () => {
                 {leads.filter((l) => !l.is_deleted).length}
               </span>
             </TabsTrigger>
-            {isMainAdmin && (
-              <TabsTrigger value="deleted" className="gap-2">
-                <Archive className="h-4 w-4" />
-                Удаленные
-                <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
-                  {leads.filter((l) => l.is_deleted).length}
-                </span>
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="deleted" className="gap-2">
+              <Archive className="h-4 w-4" />
+              Удаленные
+              <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
+                {leads.filter((l) => l.is_deleted).length}
+              </span>
+            </TabsTrigger>
           </TabsList>
+
+          {!isMainAdmin && activeTab === "deleted" && (
+            <div className="mb-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+              Вы можете просматривать удалённые заявки, но не можете их восстанавливать или удалять.
+            </div>
+          )}
 
           <TabsContent value="active">
             <LeadsTable
@@ -757,22 +769,22 @@ const Admin = () => {
               openLeadPreview={openLeadPreview}
               formatDate={formatDate}
               leadsLoading={leadsLoading}
+              showCheckboxes={true}
             />
           </TabsContent>
 
-          {isMainAdmin && (
-            <TabsContent value="deleted">
-              <LeadsTable
-                leads={deletedLeads}
-                selectedLeads={selectedLeads}
-                toggleLeadSelection={toggleLeadSelection}
-                toggleAllLeads={() => toggleAllLeads(deletedLeads)}
-                openLeadPreview={openLeadPreview}
-                formatDate={formatDate}
-                leadsLoading={leadsLoading}
-              />
-            </TabsContent>
-          )}
+          <TabsContent value="deleted">
+            <LeadsTable
+              leads={deletedLeads}
+              selectedLeads={selectedLeads}
+              toggleLeadSelection={toggleLeadSelection}
+              toggleAllLeads={() => toggleAllLeads(deletedLeads)}
+              openLeadPreview={openLeadPreview}
+              formatDate={formatDate}
+              leadsLoading={leadsLoading}
+              showCheckboxes={isMainAdmin}
+            />
+          </TabsContent>
         </Tabs>
 
         {/* Lead Preview Modal */}
@@ -834,6 +846,7 @@ interface LeadsTableProps {
   openLeadPreview: (lead: Lead) => void;
   formatDate: (dateStr: string) => string;
   leadsLoading: boolean;
+  showCheckboxes: boolean;
 }
 
 const LeadsTable = ({
@@ -844,6 +857,7 @@ const LeadsTable = ({
   openLeadPreview,
   formatDate,
   leadsLoading,
+  showCheckboxes,
 }: LeadsTableProps) => {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -851,12 +865,14 @@ const LeadsTable = ({
         <table className="w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="p-4 text-left">
-                <Checkbox
-                  checked={selectedLeads.size === leads.length && leads.length > 0}
-                  onCheckedChange={toggleAllLeads}
-                />
-              </th>
+              {showCheckboxes && (
+                <th className="p-4 text-left">
+                  <Checkbox
+                    checked={selectedLeads.size === leads.length && leads.length > 0}
+                    onCheckedChange={toggleAllLeads}
+                  />
+                </th>
+              )}
               <th className="p-4 text-left font-medium">Дата</th>
               <th className="p-4 text-left font-medium">Имя</th>
               <th className="p-4 text-left font-medium">Email</th>
@@ -869,7 +885,7 @@ const LeadsTable = ({
           <tbody>
             {leads.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                <td colSpan={showCheckboxes ? 8 : 7} className="p-8 text-center text-muted-foreground">
                   {leadsLoading ? "Загрузка..." : "Заявок нет"}
                 </td>
               </tr>
@@ -881,12 +897,14 @@ const LeadsTable = ({
                     !lead.is_read ? "bg-primary/5 font-medium" : ""
                   }`}
                 >
-                  <td className="p-4">
-                    <Checkbox
-                      checked={selectedLeads.has(lead.id)}
-                      onCheckedChange={() => toggleLeadSelection(lead.id)}
-                    />
-                  </td>
+                  {showCheckboxes && (
+                    <td className="p-4">
+                      <Checkbox
+                        checked={selectedLeads.has(lead.id)}
+                        onCheckedChange={() => toggleLeadSelection(lead.id)}
+                      />
+                    </td>
+                  )}
                   <td className="p-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {!lead.is_read && (
