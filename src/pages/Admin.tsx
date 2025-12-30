@@ -81,6 +81,7 @@ const Admin = () => {
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
   const [staffLoading, setStaffLoading] = useState(false);
   const [newStaffEmail, setNewStaffEmail] = useState("");
+  const [newStaffPassword, setNewStaffPassword] = useState("");
   const [addingStaff, setAddingStaff] = useState(false);
 
   // Check if user is authorized (main admin or in staff_users table)
@@ -312,22 +313,66 @@ const Admin = () => {
   // Staff management
   const addStaffUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStaffEmail.trim()) return;
+    const email = newStaffEmail.trim().toLowerCase();
+    const password = newStaffPassword.trim();
+
+    if (!email || !password) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните email и пароль",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Ошибка",
+        description: "Пароль должен быть не менее 6 символов",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setAddingStaff(true);
-    const { error } = await (supabase as any)
-      .from("staff_users")
-      .insert({ email: newStaffEmail.trim().toLowerCase() });
 
-    if (error) {
+    // Step 1: Create user account via signUp
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/admin`,
+      },
+    });
+
+    if (signUpError) {
       toast({
-        title: "Ошибка добавления",
-        description: error.message,
+        title: "Ошибка регистрации",
+        description: signUpError.message,
+        variant: "destructive",
+      });
+      setAddingStaff(false);
+      return;
+    }
+
+    // Step 2: Add email to staff_users table
+    const { error: insertError } = await (supabase as any)
+      .from("staff_users")
+      .insert({ email });
+
+    if (insertError) {
+      toast({
+        title: "Ошибка добавления в список сотрудников",
+        description: insertError.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Сотрудник добавлен" });
+      toast({ 
+        title: "Сотрудник добавлен", 
+        description: `Аккаунт создан для ${email}` 
+      });
       setNewStaffEmail("");
+      setNewStaffPassword("");
       fetchStaffUsers();
     }
     setAddingStaff(false);
@@ -624,7 +669,7 @@ const Admin = () => {
           <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
             <h2 className="text-lg font-semibold mb-4">Управление сотрудниками</h2>
             
-            <form onSubmit={addStaffUser} className="flex gap-2 mb-4">
+            <form onSubmit={addStaffUser} className="space-y-3 mb-4">
               <Input
                 type="email"
                 placeholder="email@example.com"
@@ -632,12 +677,20 @@ const Admin = () => {
                 onChange={(e) => setNewStaffEmail(e.target.value)}
                 required
               />
-              <Button type="submit" disabled={addingStaff}>
+              <Input
+                type="password"
+                placeholder="Пароль (мин. 6 символов)"
+                value={newStaffPassword}
+                onChange={(e) => setNewStaffPassword(e.target.value)}
+                required
+              />
+              <Button type="submit" disabled={addingStaff} className="w-full">
                 {addingStaff ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2" />
                 )}
+                Добавить сотрудника
               </Button>
             </form>
 
