@@ -1,91 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Filter } from "lucide-react";
+import { ArrowRight, Filter, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useSEO } from "@/hooks/useSEO";
-import productControlValve from "@/assets/product-control-valve.jpg";
-import productBallValve from "@/assets/product-ball-valve.jpg";
-import productButterflyValve from "@/assets/product-butterfly-valve.jpg";
-import productGateValve from "@/assets/product-gate-valve.jpg";
-import productSafetyValve from "@/assets/product-safety-valve.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
-const categories = [
-  { id: "all", name: "Все категории" },
-  { id: "regulating", name: "Регулирующие клапаны" },
-  { id: "shutoff", name: "Отсечные клапаны" },
-  { id: "gate", name: "Запорные клапаны" },
-  { id: "safety", name: "Предохранительные клапаны" },
-  { id: "ball", name: "Шаровые краны" },
-  { id: "butterfly", name: "Дисковые затворы" },
-];
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
 
-const products = [
-  {
-    id: 1,
-    name: "Клапан регулирующий КР-25",
-    category: "regulating",
-    image: productControlValve,
-    description: "Регулирующий клапан с пневматическим приводом. DN 25-300, PN 16-40. Температура рабочей среды до +450°C.",
-    specs: ["DN 25-300", "PN 16-40", "Нерж. сталь"],
-  },
-  {
-    id: 2,
-    name: "Клапан отсечной КО-50",
-    category: "shutoff",
-    image: productBallValve,
-    description: "Быстродействующий отсечной клапан с электроприводом. Время закрытия менее 1 сек. Для аварийного отключения.",
-    specs: ["DN 50-200", "PN 16-63", "Сталь 20"],
-  },
-  {
-    id: 3,
-    name: "Затвор дисковый ЗД-100",
-    category: "butterfly",
-    image: productButterflyValve,
-    description: "Дисковый затвор с редуктором для регулирования потока. Компактная конструкция, простой монтаж.",
-    specs: ["DN 50-1200", "PN 10-25", "Чугун/Сталь"],
-  },
-  {
-    id: 4,
-    name: "Задвижка клиновая ЗКЛ",
-    category: "gate",
-    image: productGateValve,
-    description: "Клиновая задвижка с выдвижным шпинделем. Надежная конструкция для магистральных трубопроводов.",
-    specs: ["DN 50-600", "PN 16-160", "Сталь 20ГЛ"],
-  },
-  {
-    id: 5,
-    name: "Клапан предохранительный КП-80",
-    category: "safety",
-    image: productSafetyValve,
-    description: "Пружинный предохранительный клапан. Защита от превышения давления в системе. Сертифицирован РОСТЕХНАДЗОР.",
-    specs: ["DN 25-150", "PN 16-250", "Нерж. сталь"],
-  },
-  {
-    id: 6,
-    name: "Кран шаровой КШ-150",
-    category: "ball",
-    image: productBallValve,
-    description: "Полнопроходной шаровой кран с ручным или механизированным управлением. Минимальное гидравлическое сопротивление.",
-    specs: ["DN 15-500", "PN 16-160", "Сталь/Нерж."],
-  },
-  {
-    id: 7,
-    name: "Клапан регулирующе-отсечной",
-    category: "regulating",
-    image: productControlValve,
-    description: "Комбинированный клапан для регулирования и аварийного отключения. Два в одном — экономия пространства.",
-    specs: ["DN 25-200", "PN 40-63", "Нерж. 12Х18Н10Т"],
-  },
-  {
-    id: 8,
-    name: "Затвор обратный поворотный",
-    category: "gate",
-    image: productGateValve,
-    description: "Обратный клапан с поворотным диском. Предотвращает обратный поток среды. Низкое сопротивление.",
-    specs: ["DN 50-1000", "PN 10-40", "Чугун/Сталь"],
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  short_description: string | null;
+  description: string | null;
+  category_id: string | null;
+  image_url: string | null;
+  specs: string | null;
+}
 
 const Products = () => {
   useSEO({
@@ -95,11 +30,33 @@ const Products = () => {
     canonical: "https://oootdi.ru/products",
   });
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const [catRes, prodRes] = await Promise.all([
+        (supabase as any).from("product_categories").select("*").order("name"),
+        (supabase as any).from("products").select("*").order("name"),
+      ]);
+      setCategories(catRes.data || []);
+      setProducts(prodRes.data || []);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
   const filteredProducts = activeCategory === "all"
     ? products
-    : products.filter(p => p.category === activeCategory);
+    : products.filter(p => p.category_id === activeCategory);
+
+  const parseSpecs = (specs: string | null): string[] => {
+    if (!specs) return [];
+    return specs.split(",").map(s => s.trim()).filter(Boolean);
+  };
 
   return (
     <Layout>
@@ -128,6 +85,16 @@ const Products = () => {
               <span className="font-medium text-foreground">Категории:</span>
             </div>
             <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setActiveCategory("all")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeCategory === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                }`}
+              >
+                Все категории
+              </button>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
@@ -145,46 +112,66 @@ const Products = () => {
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300"
-              >
-                <div className="aspect-square overflow-hidden bg-muted">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-display font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {product.name}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                    {product.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {product.specs.map((spec, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 text-xs bg-muted rounded text-muted-foreground"
-                      >
-                        {spec}
-                      </span>
-                    ))}
+          {loading ? (
+            <div className="py-20 text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="py-20 text-center text-muted-foreground">
+              Товаров пока нет
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300"
+                >
+                  <div className="aspect-square overflow-hidden bg-muted">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        Нет фото
+                      </div>
+                    )}
                   </div>
-                  <Button asChild className="w-full">
-                    <Link to="/contacts?product=${product.name}">
-                      Отправить запрос
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <div className="p-5">
+                    <h3 className="text-lg font-display font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                      {product.name}
+                    </h3>
+                    {product.short_description && (
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                        {product.short_description}
+                      </p>
+                    )}
+                    {product.specs && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {parseSpecs(product.specs).map((spec, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-1 text-xs bg-muted rounded text-muted-foreground"
+                          >
+                            {spec}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <Button asChild className="w-full">
+                      <Link to={`/contacts?product=${encodeURIComponent(product.name)}`}>
+                        Отправить запрос
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

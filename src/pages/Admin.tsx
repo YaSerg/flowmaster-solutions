@@ -10,8 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import { 
   LogOut, Trash2, Download, RefreshCw, Eye, Lock, Loader2, 
-  Search, Users, Plus, X, RotateCcw, Archive 
+  Search, Users, Plus, X, RotateCcw, Archive, Package, FolderTree, FileText
 } from "lucide-react";
+import CategoriesManagement from "@/components/admin/CategoriesManagement";
+import ProductsManagement from "@/components/admin/ProductsManagement";
+import SiteContentManagement from "@/components/admin/SiteContentManagement";
 
 interface Lead {
   id: string;
@@ -62,7 +65,10 @@ const Admin = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [leadsLoading, setLeadsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"active" | "deleted">("active");
+  const [activeLeadsTab, setActiveLeadsTab] = useState<"active" | "deleted">("active");
+
+  // Main navigation tab
+  const [mainTab, setMainTab] = useState<"leads" | "categories" | "products" | "content">("leads");
 
   // Search/filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -590,288 +596,332 @@ const Admin = () => {
       </header>
 
       <main className="container py-8">
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-4 mb-6">
-          <Button onClick={fetchLeads} variant="outline" disabled={leadsLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${leadsLoading ? "animate-spin" : ""}`} />
-            Обновить
-          </Button>
-          
-          {activeTab === "active" ? (
-            <Button
-              onClick={softDeleteSelectedLeads}
-              variant="destructive"
-              disabled={selectedLeads.size === 0}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Удалить ({selectedLeads.size})
-            </Button>
-          ) : isMainAdmin ? (
-            <>
-              <Button
-                onClick={restoreSelectedLeads}
-                variant="secondary"
-                disabled={selectedLeads.size === 0}
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Восстановить ({selectedLeads.size})
-              </Button>
-              <Button
-                onClick={permanentDeleteSelectedLeads}
-                variant="destructive"
-                disabled={selectedLeads.size === 0}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Удалить навсегда ({selectedLeads.size})
-              </Button>
-            </>
-          ) : null}
-
-          <Button
-            variant="secondary"
-            onClick={() => setShowPasswordChange(!showPasswordChange)}
-          >
-            <Lock className="h-4 w-4 mr-2" />
-            Сменить пароль
-          </Button>
-
-          {isMainAdmin && (
-            <Button
-              variant="outline"
-              onClick={() => setShowStaffManagement(!showStaffManagement)}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Сотрудники
-            </Button>
-          )}
-        </div>
-
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Поиск по компании или теме..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Password Change Form */}
-        {showPasswordChange && (
-          <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Изменение пароля</h2>
-            <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">Новый пароль</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Минимум 6 символов"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Подтвердите пароль</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Повторите пароль"
-                  required
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={passwordLoading}>
-                  {passwordLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Сохранить
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setShowPasswordChange(false)}
-                >
-                  Отмена
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Staff Management (Main Admin Only) */}
-        {isMainAdmin && showStaffManagement && (
-          <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Управление сотрудниками</h2>
-            
-            {/* Created password notification */}
-            {createdStaffPassword && (
-              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <p className="text-sm text-green-700 dark:text-green-400">
-                  <strong>Аккаунт создан!</strong> Обязательно передайте сотруднику его временный пароль: <code className="bg-green-500/20 px-1 rounded">{createdStaffPassword}</code>, так как в целях безопасности он не хранится в открытом виде.
-                </p>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="mt-2"
-                  onClick={() => setCreatedStaffPassword(null)}
-                >
-                  Закрыть
-                </Button>
-              </div>
-            )}
-            
-            <form onSubmit={addStaffUser} className="space-y-3 mb-4">
-              <Input
-                type="email"
-                placeholder="email@example.com"
-                value={newStaffEmail}
-                onChange={(e) => setNewStaffEmail(e.target.value)}
-                required
-              />
-              <Input
-                type="password"
-                placeholder="Пароль (мин. 6 символов)"
-                value={newStaffPassword}
-                onChange={(e) => setNewStaffPassword(e.target.value)}
-                required
-              />
-              <Button type="submit" disabled={addingStaff} className="w-full">
-                {addingStaff ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                Добавить сотрудника
-              </Button>
-            </form>
-
-            {staffLoading ? (
-              <div className="text-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto" />
-              </div>
-            ) : staffUsers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Сотрудников пока нет</p>
-            ) : (
-              <ul className="space-y-2">
-                {staffUsers.map((staff) => (
-                  <li
-                    key={staff.id}
-                    className="flex items-center justify-between bg-muted p-2 rounded-lg"
-                  >
-                    <span className="text-sm">{staff.email}</span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setResetPasswordStaff(staff)}
-                        title="Сбросить пароль"
-                      >
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeStaffUser(staff.id)}
-                        title="Удалить"
-                      >
-                        <X className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {/* Reset Password Modal */}
-        {resetPasswordStaff && (
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-            onClick={() => setResetPasswordStaff(null)}
-          >
-            <div
-              className="bg-card rounded-xl p-6 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-lg font-semibold mb-4">
-                Сброс пароля: {resetPasswordStaff.email}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Для сброса пароля сотрудника попросите его использовать функцию «Забыли пароль» на странице входа.
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setResetPasswordStaff(null)}
-                >
-                  Закрыть
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Leads Tabs */}
-        <Tabs 
-          value={activeTab} 
-          onValueChange={(v) => {
-            setActiveTab(v as "active" | "deleted");
-            setSelectedLeads(new Set());
-          }}
-        >
-          <TabsList className="mb-4">
-            <TabsTrigger value="active" className="gap-2">
-              Активные
-              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                {leads.filter((l) => !l.is_deleted).length}
-              </span>
+        {/* Main Navigation Tabs */}
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as any)} className="mb-6">
+          <TabsList className="mb-6">
+            <TabsTrigger value="leads" className="gap-2">
+              <Eye className="h-4 w-4" />
+              Заявки
             </TabsTrigger>
-            <TabsTrigger value="deleted" className="gap-2">
-              <Archive className="h-4 w-4" />
-              Удаленные
-              <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
-                {leads.filter((l) => l.is_deleted).length}
-              </span>
-            </TabsTrigger>
+            {isMainAdmin && (
+              <>
+                <TabsTrigger value="categories" className="gap-2">
+                  <FolderTree className="h-4 w-4" />
+                  Категории
+                </TabsTrigger>
+                <TabsTrigger value="products" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  Товары
+                </TabsTrigger>
+                <TabsTrigger value="content" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Контент
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
-          {!isMainAdmin && activeTab === "deleted" && (
-            <div className="mb-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-              Вы можете просматривать удалённые заявки, но не можете их восстанавливать или удалять.
-            </div>
-          )}
+          {/* Leads Tab */}
+          <TabsContent value="leads">
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-4 mb-6">
+              <Button onClick={fetchLeads} variant="outline" disabled={leadsLoading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${leadsLoading ? "animate-spin" : ""}`} />
+                Обновить
+              </Button>
+              
+              {activeLeadsTab === "active" ? (
+                <Button
+                  onClick={softDeleteSelectedLeads}
+                  variant="destructive"
+                  disabled={selectedLeads.size === 0}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Удалить ({selectedLeads.size})
+                </Button>
+              ) : isMainAdmin ? (
+                <>
+                  <Button
+                    onClick={restoreSelectedLeads}
+                    variant="secondary"
+                    disabled={selectedLeads.size === 0}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Восстановить ({selectedLeads.size})
+                  </Button>
+                  <Button
+                    onClick={permanentDeleteSelectedLeads}
+                    variant="destructive"
+                    disabled={selectedLeads.size === 0}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Удалить навсегда ({selectedLeads.size})
+                  </Button>
+                </>
+              ) : null}
 
-          <TabsContent value="active">
-            <LeadsTable
-              leads={activeLeads}
-              selectedLeads={selectedLeads}
-              toggleLeadSelection={toggleLeadSelection}
-              toggleAllLeads={() => toggleAllLeads(activeLeads)}
-              openLeadPreview={openLeadPreview}
-              formatDate={formatDate}
-              leadsLoading={leadsLoading}
-              showCheckboxes={true}
-            />
+              <Button
+                variant="secondary"
+                onClick={() => setShowPasswordChange(!showPasswordChange)}
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Сменить пароль
+              </Button>
+
+              {isMainAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowStaffManagement(!showStaffManagement)}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Сотрудники
+                </Button>
+              )}
+            </div>
+
+            {/* Search */}
+            <div className="mb-6">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Поиск по компании или теме..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Password Change Form */}
+            {showPasswordChange && (
+              <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
+                <h2 className="text-lg font-semibold mb-4">Изменение пароля</h2>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Новый пароль</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Минимум 6 символов"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Подтвердите пароль</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Повторите пароль"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={passwordLoading}>
+                      {passwordLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Сохранить
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowPasswordChange(false)}
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Staff Management (Main Admin Only) */}
+            {isMainAdmin && showStaffManagement && (
+              <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
+                <h2 className="text-lg font-semibold mb-4">Управление сотрудниками</h2>
+                
+                {/* Created password notification */}
+                {createdStaffPassword && (
+                  <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p className="text-sm text-green-700 dark:text-green-400">
+                      <strong>Аккаунт создан!</strong> Обязательно передайте сотруднику его временный пароль: <code className="bg-green-500/20 px-1 rounded">{createdStaffPassword}</code>, так как в целях безопасности он не хранится в открытом виде.
+                    </p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => setCreatedStaffPassword(null)}
+                    >
+                      Закрыть
+                    </Button>
+                  </div>
+                )}
+                
+                <form onSubmit={addStaffUser} className="space-y-3 mb-4">
+                  <Input
+                    type="email"
+                    placeholder="email@example.com"
+                    value={newStaffEmail}
+                    onChange={(e) => setNewStaffEmail(e.target.value)}
+                    required
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Пароль (мин. 6 символов)"
+                    value={newStaffPassword}
+                    onChange={(e) => setNewStaffPassword(e.target.value)}
+                    required
+                  />
+                  <Button type="submit" disabled={addingStaff} className="w-full">
+                    {addingStaff ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Добавить сотрудника
+                  </Button>
+                </form>
+
+                {staffLoading ? (
+                  <div className="text-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+                  </div>
+                ) : staffUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Сотрудников пока нет</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {staffUsers.map((staff) => (
+                      <li
+                        key={staff.id}
+                        className="flex items-center justify-between bg-muted p-2 rounded-lg"
+                      >
+                        <span className="text-sm">{staff.email}</span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setResetPasswordStaff(staff)}
+                            title="Сбросить пароль"
+                          >
+                            <Lock className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeStaffUser(staff.id)}
+                            title="Удалить"
+                          >
+                            <X className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* Reset Password Modal */}
+            {resetPasswordStaff && (
+              <div
+                className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+                onClick={() => setResetPasswordStaff(null)}
+              >
+                <div
+                  className="bg-card rounded-xl p-6 max-w-sm w-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h2 className="text-lg font-semibold mb-4">
+                    Сброс пароля: {resetPasswordStaff.email}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Для сброса пароля сотрудника попросите его использовать функцию «Забыли пароль» на странице входа.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setResetPasswordStaff(null)}
+                    >
+                      Закрыть
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Leads Tabs */}
+            <Tabs 
+              value={activeLeadsTab} 
+              onValueChange={(v) => {
+                setActiveLeadsTab(v as "active" | "deleted");
+                setSelectedLeads(new Set());
+              }}
+            >
+              <TabsList className="mb-4">
+                <TabsTrigger value="active" className="gap-2">
+                  Активные
+                  <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                    {leads.filter((l) => !l.is_deleted).length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="deleted" className="gap-2">
+                  <Archive className="h-4 w-4" />
+                  Удаленные
+                  <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
+                    {leads.filter((l) => l.is_deleted).length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              {!isMainAdmin && activeLeadsTab === "deleted" && (
+                <div className="mb-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+                  Вы можете просматривать удалённые заявки, но не можете их восстанавливать или удалять.
+                </div>
+              )}
+
+              <TabsContent value="active">
+                <LeadsTable
+                  leads={activeLeads}
+                  selectedLeads={selectedLeads}
+                  toggleLeadSelection={toggleLeadSelection}
+                  toggleAllLeads={() => toggleAllLeads(activeLeads)}
+                  openLeadPreview={openLeadPreview}
+                  formatDate={formatDate}
+                  leadsLoading={leadsLoading}
+                  showCheckboxes={true}
+                />
+              </TabsContent>
+
+              <TabsContent value="deleted">
+                <LeadsTable
+                  leads={deletedLeads}
+                  selectedLeads={selectedLeads}
+                  toggleLeadSelection={toggleLeadSelection}
+                  toggleAllLeads={() => toggleAllLeads(deletedLeads)}
+                  openLeadPreview={openLeadPreview}
+                  formatDate={formatDate}
+                  leadsLoading={leadsLoading}
+                  showCheckboxes={isMainAdmin}
+                />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          <TabsContent value="deleted">
-            <LeadsTable
-              leads={deletedLeads}
-              selectedLeads={selectedLeads}
-              toggleLeadSelection={toggleLeadSelection}
-              toggleAllLeads={() => toggleAllLeads(deletedLeads)}
-              openLeadPreview={openLeadPreview}
-              formatDate={formatDate}
-              leadsLoading={leadsLoading}
-              showCheckboxes={isMainAdmin}
-            />
+          {/* Categories Tab */}
+          <TabsContent value="categories">
+            <CategoriesManagement />
+          </TabsContent>
+
+          {/* Products Tab */}
+          <TabsContent value="products">
+            <ProductsManagement />
+          </TabsContent>
+
+          {/* Site Content Tab */}
+          <TabsContent value="content">
+            <SiteContentManagement />
           </TabsContent>
         </Tabs>
 
