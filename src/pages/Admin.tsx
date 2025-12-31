@@ -47,7 +47,7 @@ const Admin = () => {
   const { toast } = useToast();
 
   // Access control state
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [accessLoading, setAccessLoading] = useState(true);
 
   // Check if user is main admin
@@ -84,13 +84,23 @@ const Admin = () => {
   const [newStaffPassword, setNewStaffPassword] = useState("");
   const [addingStaff, setAddingStaff] = useState(false);
 
+  // Staff password reset state
+  const [resetPasswordStaff, setResetPasswordStaff] = useState<StaffUser | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
+  // Created staff password display
+  const [createdStaffPassword, setCreatedStaffPassword] = useState<string | null>(null);
+
   // Check if user is authorized (main admin or in staff_users table)
   const checkAuthorization = async () => {
     if (!user) {
-      setIsAuthorized(false);
+      setIsAuthorized(null);
       setAccessLoading(false);
       return;
     }
+
+    setAccessLoading(true);
 
     // Main admin always authorized
     if (user.email === MAIN_ADMIN_EMAIL) {
@@ -367,6 +377,8 @@ const Admin = () => {
         variant: "destructive",
       });
     } else {
+      // Show created password to admin
+      setCreatedStaffPassword(password);
       toast({ 
         title: "Сотрудник добавлен", 
         description: `Аккаунт создан для ${email}` 
@@ -376,6 +388,32 @@ const Admin = () => {
       fetchStaffUsers();
     }
     setAddingStaff(false);
+  };
+
+  // Reset staff password (uses edge function or shows instructions)
+  const handleResetStaffPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPasswordStaff || resetPasswordValue.length < 6) {
+      toast({
+        title: "Ошибка",
+        description: "Пароль должен быть не менее 6 символов",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResetPasswordLoading(true);
+    
+    // Note: supabase.auth.admin.updateUserById() requires service role key
+    // which is not available on client side. We'll show instructions instead.
+    toast({
+      title: "Сброс пароля",
+      description: `Для сброса пароля сотрудника ${resetPasswordStaff.email} используйте функцию "Забыли пароль" на странице входа или обратитесь в поддержку Lovable Cloud.`,
+    });
+    
+    setResetPasswordLoading(false);
+    setResetPasswordStaff(null);
+    setResetPasswordValue("");
   };
 
   const removeStaffUser = async (id: string) => {
@@ -457,7 +495,8 @@ const Admin = () => {
   const activeLeads = filterLeads(leads.filter((l) => !l.is_deleted));
   const deletedLeads = filterLeads(leads.filter((l) => l.is_deleted));
 
-  if (loading || accessLoading) {
+  // Show loading while auth or access check is in progress
+  if (loading || (user && accessLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -508,8 +547,8 @@ const Admin = () => {
     );
   }
 
-  // Logged in but not authorized
-  if (!isAuthorized) {
+  // Logged in but not authorized (only show after loading is complete)
+  if (user && isAuthorized === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted p-4">
         <div className="text-center">
@@ -669,13 +708,22 @@ const Admin = () => {
           <div className="bg-card p-6 rounded-xl border border-border mb-6 max-w-md">
             <h2 className="text-lg font-semibold mb-4">Управление сотрудниками</h2>
             
-            {/* Email confirmation notice */}
-            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-              <p className="text-sm text-amber-700 dark:text-amber-400">
-                <strong>Совет:</strong> Чтобы сотрудники могли входить сразу без подтверждения email, 
-                отключите «Confirm Email» в настройках Lovable Cloud (Auth → Settings).
-              </p>
-            </div>
+            {/* Created password notification */}
+            {createdStaffPassword && (
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-sm text-green-700 dark:text-green-400">
+                  <strong>Аккаунт создан!</strong> Обязательно передайте сотруднику его временный пароль: <code className="bg-green-500/20 px-1 rounded">{createdStaffPassword}</code>, так как в целях безопасности он не хранится в открытом виде.
+                </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => setCreatedStaffPassword(null)}
+                >
+                  Закрыть
+                </Button>
+              </div>
+            )}
             
             <form onSubmit={addStaffUser} className="space-y-3 mb-4">
               <Input
@@ -716,17 +764,57 @@ const Admin = () => {
                     className="flex items-center justify-between bg-muted p-2 rounded-lg"
                   >
                     <span className="text-sm">{staff.email}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeStaffUser(staff.id)}
-                    >
-                      <X className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setResetPasswordStaff(staff)}
+                        title="Сбросить пароль"
+                      >
+                        <Lock className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeStaffUser(staff.id)}
+                        title="Удалить"
+                      >
+                        <X className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
+          </div>
+        )}
+
+        {/* Reset Password Modal */}
+        {resetPasswordStaff && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => setResetPasswordStaff(null)}
+          >
+            <div
+              className="bg-card rounded-xl p-6 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold mb-4">
+                Сброс пароля: {resetPasswordStaff.email}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Для сброса пароля сотрудника попросите его использовать функцию «Забыли пароль» на странице входа.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setResetPasswordStaff(null)}
+                >
+                  Закрыть
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
