@@ -15,6 +15,7 @@ import {
 import CategoriesManagement from "@/components/admin/CategoriesManagement";
 import ProductsManagement from "@/components/admin/ProductsManagement";
 import SiteContentManagement from "@/components/admin/SiteContentManagement";
+import CompanyInfoManagement from "@/components/admin/CompanyInfoManagement";
 
 interface Lead {
   id: string;
@@ -921,7 +922,10 @@ const Admin = () => {
 
           {/* Site Content Tab */}
           <TabsContent value="content">
-            <SiteContentManagement />
+            <div className="space-y-6">
+              <CompanyInfoManagement />
+              <SiteContentManagement />
+            </div>
           </TabsContent>
         </Tabs>
 

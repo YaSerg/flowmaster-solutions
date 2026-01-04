@@ -1,9 +1,28 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Building2, Users, Globe, Award } from "lucide-react";
+import { ArrowRight, Building2, Users, Globe, Award, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useSEO } from "@/hooks/useSEO";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-valve.jpg";
+
+interface CompanyInfo {
+  id: number;
+  title: string;
+  content: string | null;
+}
+
+const fetchCompanyInfo = async (): Promise<CompanyInfo | null> => {
+  const { data, error } = await (supabase as any)
+    .from("company_info")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+  
+  if (error) throw error;
+  return data;
+};
 
 const milestones = [
   { year: "2021", title: "Основание компании", description: "Начало работы в сфере поставок промышленной арматуры" },
@@ -36,12 +55,26 @@ const values = [
 ];
 
 const About = () => {
+  const { data: companyInfo, isLoading, error } = useQuery({
+    queryKey: ["company_info"],
+    queryFn: fetchCompanyInfo,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
   useSEO({
     title: "О компании ООО ТДИ",
     description: "ООО Торговый Дом Импульс — надежный партнер в сфере комплексных поставок трубопроводной арматуры для промышленных предприятий России и СНГ с 2021 года",
     keywords: "о компании ТДИ, Торговый Дом Импульс, поставки арматуры, промышленное оборудование",
     canonical: "https://oootdi.ru/about",
   });
+
+  // Default content if not loaded
+  const defaultTitle = "О компании";
+  const defaultContent = `<p>ООО «Торговый Дом Импульс» — надежный партнер в сфере комплексных поставок 
+    трубопроводной арматуры для промышленных предприятий России и СНГ</p>`;
+
+  const displayTitle = companyInfo?.title || defaultTitle;
+  const displayContent = companyInfo?.content || defaultContent;
 
   return (
     <Layout>
@@ -50,13 +83,22 @@ const About = () => {
         <div className="absolute inset-0 bg-hero-pattern opacity-30" />
         <div className="container relative z-10">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-6">
-              О компании
-            </h1>
-            <p className="text-xl text-primary-foreground/80 leading-relaxed">
-              ООО «Торговый Дом Импульс» — надежный партнер в сфере комплексных поставок 
-              трубопроводной арматуры для промышленных предприятий России и СНГ
-            </p>
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary-foreground" />
+                <span className="text-primary-foreground/80">Загрузка...</span>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-6">
+                  {displayTitle}
+                </h1>
+                <div 
+                  className="text-xl text-primary-foreground/80 leading-relaxed prose prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{ __html: displayContent }}
+                />
+              </>
+            )}
           </div>
         </div>
       </section>
