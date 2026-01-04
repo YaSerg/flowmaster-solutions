@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import CategoriesManagement from "@/components/admin/CategoriesManagement";
 import ProductsManagement from "@/components/admin/ProductsManagement";
-import SiteContentManagement from "@/components/admin/SiteContentManagement";
-import CompanyInfoManagement from "@/components/admin/CompanyInfoManagement";
+import PagesContentManagement from "@/components/admin/PagesContentManagement";
 
 interface Lead {
   id: string;
@@ -922,10 +921,7 @@ const Admin = () => {
 
           {/* Site Content Tab */}
           <TabsContent value="content">
-            <div className="space-y-6">
-              <CompanyInfoManagement />
-              <SiteContentManagement />
-            </div>
+            <PagesContentManagement />
           </TabsContent>
         </Tabs>
 

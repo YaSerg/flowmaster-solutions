@@ -7,17 +7,20 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-valve.jpg";
 
-interface CompanyInfo {
+interface PageInfo {
   id: number;
   title: string;
+  subtitle: string | null;
   content: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
 }
 
-const fetchCompanyInfo = async (): Promise<CompanyInfo | null> => {
+const fetchAboutPageData = async (): Promise<PageInfo | null> => {
   const { data, error } = await (supabase as any)
     .from("company_info")
     .select("*")
-    .eq("id", 1)
+    .eq("id", 2)
     .maybeSingle();
   
   if (error) throw error;
@@ -55,26 +58,30 @@ const values = [
 ];
 
 const About = () => {
-  const { data: companyInfo, isLoading, error } = useQuery({
-    queryKey: ["company_info"],
-    queryFn: fetchCompanyInfo,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  const { data: pageData, isLoading } = useQuery({
+    queryKey: ["about_page_data"],
+    queryFn: fetchAboutPageData,
+    staleTime: 1000 * 60 * 5,
   });
 
+  // Default values
+  const defaultTitle = "О компании";
+  const defaultSubtitle = "ООО «Торговый Дом Импульс» — надежный партнер в сфере комплексных поставок трубопроводной арматуры для промышленных предприятий России и СНГ";
+  const defaultSeoTitle = "О компании ООО ТДИ";
+  const defaultSeoDescription = "ООО Торговый Дом Импульс — надежный партнер в сфере комплексных поставок трубопроводной арматуры для промышленных предприятий России и СНГ с 2021 года";
+
+  const displayTitle = pageData?.title || defaultTitle;
+  const displaySubtitle = pageData?.subtitle || defaultSubtitle;
+  const displayContent = pageData?.content || null;
+  const seoTitle = pageData?.seo_title || defaultSeoTitle;
+  const seoDescription = pageData?.seo_description || defaultSeoDescription;
+
   useSEO({
-    title: "О компании ООО ТДИ",
-    description: "ООО Торговый Дом Импульс — надежный партнер в сфере комплексных поставок трубопроводной арматуры для промышленных предприятий России и СНГ с 2021 года",
+    title: seoTitle,
+    description: seoDescription,
     keywords: "о компании ТДИ, Торговый Дом Импульс, поставки арматуры, промышленное оборудование",
     canonical: "https://oootdi.ru/about",
   });
-
-  // Default content if not loaded
-  const defaultTitle = "О компании";
-  const defaultContent = `<p>ООО «Торговый Дом Импульс» — надежный партнер в сфере комплексных поставок 
-    трубопроводной арматуры для промышленных предприятий России и СНГ</p>`;
-
-  const displayTitle = companyInfo?.title || defaultTitle;
-  const displayContent = companyInfo?.content || defaultContent;
 
   return (
     <Layout>
@@ -93,10 +100,9 @@ const About = () => {
                 <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-6">
                   {displayTitle}
                 </h1>
-                <div 
-                  className="text-xl text-primary-foreground/80 leading-relaxed prose prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: displayContent }}
-                />
+                <p className="text-xl text-primary-foreground/80 leading-relaxed">
+                  {displaySubtitle}
+                </p>
               </>
             )}
           </div>
@@ -111,22 +117,29 @@ const About = () => {
               <h2 className="text-3xl font-display font-bold text-foreground mb-6">
                 На рынке промышленного оборудования с 2021 года
               </h2>
-              <div className="space-y-4 text-muted-foreground leading-relaxed">
-                <p>
-                  Компания «Торговый Дом Импульс» была основана в 2021 году и за это время 
-                  зарекомендовала себя как надежный поставщик трубопроводной арматуры для 
-                  предприятий нефтегазовой, энергетической и химической промышленности.
-                </p>
-                <p>
-                  Мы осуществляем поставки регулирующих, отсечных, запорных клапанов, 
-                  а также специальной арматуры для работы в сложных условиях эксплуатации. 
-                  Наша продукция соответствует требованиям ГОСТ, ТР ТС и международных стандартов.
-                </p>
-                <p>
-                  Собственный склад в Московской области и развитая логистическая сеть 
-                  позволяют оперативно доставлять продукцию во все регионы России и СНГ.
-                </p>
-              </div>
+              {displayContent ? (
+                <div 
+                  className="space-y-4 text-muted-foreground leading-relaxed prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: displayContent }}
+                />
+              ) : (
+                <div className="space-y-4 text-muted-foreground leading-relaxed">
+                  <p>
+                    Компания «Торговый Дом Импульс» была основана в 2021 году и за это время 
+                    зарекомендовала себя как надежный поставщик трубопроводной арматуры для 
+                    предприятий нефтегазовой, энергетической и химической промышленности.
+                  </p>
+                  <p>
+                    Мы осуществляем поставки регулирующих, отсечных, запорных клапанов, 
+                    а также специальной арматуры для работы в сложных условиях эксплуатации. 
+                    Наша продукция соответствует требованиям ГОСТ, ТР ТС и международных стандартов.
+                  </p>
+                  <p>
+                    Собственный склад в Московской области и развитая логистическая сеть 
+                    позволяют оперативно доставлять продукцию во все регионы России и СНГ.
+                  </p>
+                </div>
+              )}
               
               <div className="mt-8 grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-lg bg-muted">
