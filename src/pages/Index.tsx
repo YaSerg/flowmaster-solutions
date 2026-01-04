@@ -1,12 +1,34 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Shield, Truck, Award, CheckCircle, Phone, Clock, Wrench } from "lucide-react";
+import { ArrowRight, Shield, Truck, Award, CheckCircle, Phone, Clock, Wrench, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useSEO } from "@/hooks/useSEO";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-valve.jpg";
 import projectRefinery from "@/assets/project-refinery.jpg";
 import projectPowerplant from "@/assets/project-powerplant.jpg";
 import projectChemical from "@/assets/project-chemical.jpg";
+
+interface PageInfo {
+  id: number;
+  title: string;
+  subtitle: string | null;
+  content: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+}
+
+const fetchHomePageData = async (): Promise<PageInfo | null> => {
+  const { data, error } = await (supabase as any)
+    .from("company_info")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+  
+  if (error) throw error;
+  return data;
+};
 
 const features = [
   {
@@ -68,9 +90,26 @@ const news = [
 ];
 
 const Index = () => {
+  const { data: pageData, isLoading } = useQuery({
+    queryKey: ["home_page_data"],
+    queryFn: fetchHomePageData,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Default values
+  const defaultTitle = "Трубопроводная арматура для промышленности";
+  const defaultSubtitle = "Комплексные поставки и производство клапанов, задвижек и другой трубопроводной арматуры для нефтегазовой и энергетической отрасли";
+  const defaultSeoTitle = "Трубопроводная арматура ООО ТДИ";
+  const defaultSeoDescription = "ООО Торговый Дом Импульс — комплексные поставки и производство трубопроводной арматуры: клапаны регулирующие, отсечные, запорные, задвижки для нефтегазовой и энергетической отрасли";
+
+  const displayTitle = pageData?.title || defaultTitle;
+  const displaySubtitle = pageData?.subtitle || defaultSubtitle;
+  const seoTitle = pageData?.seo_title || defaultSeoTitle;
+  const seoDescription = pageData?.seo_description || defaultSeoDescription;
+
   useSEO({
-    title: "Трубопроводная арматура ООО ТДИ",
-    description: "ООО Торговый Дом Импульс — комплексные поставки и производство трубопроводной арматуры: клапаны регулирующие, отсечные, запорные, задвижки для нефтегазовой и энергетической отрасли",
+    title: seoTitle,
+    description: seoDescription,
     keywords: "трубопроводная арматура, клапаны регулирующие, клапаны отсечные, задвижки, запорные клапаны, ТДИ, Торговый Дом Импульс",
     canonical: "https://oootdi.ru/",
   });
@@ -96,14 +135,21 @@ const Index = () => {
               <span className="text-sm font-medium">Надежный партнер с 2021 года</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary-foreground leading-tight mb-6">
-              Трубопроводная арматура для промышленности
-            </h1>
-            
-            <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-2xl leading-relaxed">
-              Комплексные поставки и производство клапанов, задвижек и другой 
-              трубопроводной арматуры для нефтегазовой и энергетической отрасли
-            </p>
+            {isLoading ? (
+              <div className="flex items-center gap-2 mb-6">
+                <Loader2 className="h-6 w-6 animate-spin text-primary-foreground" />
+              </div>
+            ) : (
+              <>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary-foreground leading-tight mb-6">
+                  {displayTitle}
+                </h1>
+                
+                <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-2xl leading-relaxed">
+                  {displaySubtitle}
+                </p>
+              </>
+            )}
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Button asChild variant="hero" size="xl">
@@ -163,11 +209,18 @@ const Index = () => {
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-6">
                 О компании
               </h2>
-              <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                ООО «Торговый Дом Импульс» — ваш надежный партнер в сфере поставок 
-                трубопроводной арматуры. Мы работаем с ведущими предприятиями нефтегазовой, 
-                энергетической и химической промышленности.
-              </p>
+              {pageData?.content ? (
+                <div 
+                  className="text-muted-foreground text-lg mb-6 leading-relaxed prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: pageData.content }}
+                />
+              ) : (
+                <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+                  ООО «Торговый Дом Импульс» — ваш надежный партнер в сфере поставок 
+                  трубопроводной арматуры. Мы работаем с ведущими предприятиями нефтегазовой, 
+                  энергетической и химической промышленности.
+                </p>
+              )}
               <ul className="space-y-3 mb-8">
                 {[
                   "Собственное производство и склад",
