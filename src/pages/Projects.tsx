@@ -50,13 +50,13 @@ const Projects = () => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("projects")
         .select("*")
         .order("year", { ascending: false });
 
       if (error) throw error;
-      return data as Project[];
+      return (data || []) as Project[];
     },
   });
 

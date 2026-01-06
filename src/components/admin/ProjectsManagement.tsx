@@ -57,13 +57,13 @@ const ProjectsManagement = () => {
 
   const fetchProjects = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("projects")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setProjects(data || []);
+      setProjects((data || []) as Project[]);
     } catch (error) {
       console.error("Error fetching projects:", error);
       toast.error("Ошибка загрузки проектов");
@@ -164,7 +164,7 @@ const ProjectsManagement = () => {
       };
 
       if (editingId) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("projects")
           .update(projectData)
           .eq("id", editingId);
@@ -172,7 +172,7 @@ const ProjectsManagement = () => {
         if (error) throw error;
         toast.success("Проект обновлен");
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("projects")
           .insert([projectData]);
 
@@ -195,7 +195,7 @@ const ProjectsManagement = () => {
     if (!confirm("Удалить этот проект?")) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("projects")
         .delete()
         .eq("id", id);
