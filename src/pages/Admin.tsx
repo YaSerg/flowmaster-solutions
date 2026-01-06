@@ -10,11 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import { 
   LogOut, Trash2, Download, RefreshCw, Eye, Lock, Loader2, 
-  Search, Users, Plus, X, RotateCcw, Archive, Package, FolderTree, FileText
+  Search, Users, Plus, X, RotateCcw, Archive, Package, FolderTree, FileText, Briefcase
 } from "lucide-react";
 import CategoriesManagement from "@/components/admin/CategoriesManagement";
 import ProductsManagement from "@/components/admin/ProductsManagement";
 import PagesContentManagement from "@/components/admin/PagesContentManagement";
+import ProjectsManagement from "@/components/admin/ProjectsManagement";
 
 interface Lead {
   id: string;
@@ -68,7 +69,7 @@ const Admin = () => {
   const [activeLeadsTab, setActiveLeadsTab] = useState<"active" | "deleted">("active");
 
   // Main navigation tab
-  const [mainTab, setMainTab] = useState<"leads" | "categories" | "products" | "content">("leads");
+  const [mainTab, setMainTab] = useState<"leads" | "categories" | "products" | "projects" | "content">("leads");
 
   // Search/filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -617,6 +618,10 @@ const Admin = () => {
                   <FileText className="h-4 w-4" />
                   Контент
                 </TabsTrigger>
+                <TabsTrigger value="projects" className="gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Проекты
+                </TabsTrigger>
               </>
             )}
           </TabsList>
@@ -922,6 +927,11 @@ const Admin = () => {
           {/* Site Content Tab */}
           <TabsContent value="content">
             <PagesContentManagement />
+          </TabsContent>
+
+          {/* Projects Tab */}
+          <TabsContent value="projects">
+            <ProjectsManagement />
           </TabsContent>
         </Tabs>
 
