@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_info: {
+        Row: {
+          content: string | null
+          id: number
+          seo_description: string | null
+          seo_title: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          id: number
+          seo_description?: string | null
+          seo_title?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          id?: number
+          seo_description?: string | null
+          seo_title?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           attachment_name: string | null
