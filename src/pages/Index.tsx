@@ -19,6 +19,23 @@ interface PageInfo {
   seo_description: string | null;
 }
 
+interface Project {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  image_url: string | null;
+}
+
+interface PageInfo {
+  id: number;
+  title: string;
+  subtitle: string | null;
+  content: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+}
+
 const fetchHomePageData = async (): Promise<PageInfo | null> => {
   const { data, error } = await (supabase as any)
     .from("company_info")
@@ -28,6 +45,24 @@ const fetchHomePageData = async (): Promise<PageInfo | null> => {
   
   if (error) throw error;
   return data;
+};
+
+const fetchLatestProjects = async (): Promise<Project[]> => {
+  const { data, error } = await (supabase as any)
+    .from("projects")
+    .select("id, title, category, description, image_url")
+    .order("created_at", { ascending: false })
+    .limit(3);
+  
+  if (error) throw error;
+  return data || [];
+};
+
+// Fallback images by category
+const fallbackImages: Record<string, string> = {
+  oil: projectRefinery,
+  energy: projectPowerplant,
+  chemical: projectChemical,
 };
 
 const features = [
@@ -50,24 +85,6 @@ const features = [
     icon: Wrench,
     title: "Техподдержка",
     description: "Инженерное сопровождение и консультации на всех этапах",
-  },
-];
-
-const projects = [
-  {
-    image: projectRefinery,
-    title: "НПЗ «Роснефть»",
-    description: "Поставка регулирующей арматуры для установки каталитического крекинга",
-  },
-  {
-    image: projectPowerplant,
-    title: "ТЭС «Энерго»",
-    description: "Комплексное оснащение турбинного цеха запорной арматурой",
-  },
-  {
-    image: projectChemical,
-    title: "Химический завод «Полимер»",
-    description: "Модернизация системы трубопроводов с заменой арматуры",
   },
 ];
 
@@ -95,6 +112,16 @@ const Index = () => {
     queryFn: fetchHomePageData,
     staleTime: 1000 * 60 * 5,
   });
+
+  const { data: latestProjects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ["latest_projects"],
+    queryFn: fetchLatestProjects,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const getProjectImage = (project: Project) => {
+    return project.image_url || fallbackImages[project.category] || projectRefinery;
+  };
 
   // Default values
   const defaultTitle = "Трубопроводная арматура для промышленности";
@@ -288,31 +315,41 @@ const Index = () => {
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            {projects.map((project, index) => (
-              <div
-                key={index}
-                className="group relative overflow-hidden rounded-xl shadow-card"
-              >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
+          {projectsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : latestProjects.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              Проекты скоро появятся
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+              {latestProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="group relative overflow-hidden rounded-xl shadow-card"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={getProjectImage(project)}
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-xl font-display font-semibold text-primary-foreground mb-2">
+                      {project.title}
+                    </h3>
+                    <p className="text-primary-foreground/80 text-sm">
+                      {project.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-secondary/90 via-secondary/40 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <h3 className="text-xl font-display font-semibold text-primary-foreground mb-2">
-                    {project.title}
-                  </h3>
-                  <p className="text-primary-foreground/80 text-sm">
-                    {project.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -22,12 +22,11 @@ interface Project {
   seo_description: string | null;
 }
 
-const projectCategories = [
-  { id: "all", name: "Все проекты" },
-  { id: "oil", name: "Нефтегазовая отрасль" },
-  { id: "energy", name: "Энергетика" },
-  { id: "chemical", name: "Химическая промышленность" },
-];
+interface ProjectCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 // Fallback images by category
 const fallbackImages: Record<string, string> = {
@@ -47,13 +46,26 @@ const Projects = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["project_categories"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("project_categories")
+        .select("*")
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      return (data || []) as ProjectCategory[];
+    },
+  });
+
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("projects")
         .select("*")
-        .order("year", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return (data || []) as Project[];
@@ -90,12 +102,22 @@ const Projects = () => {
         <div className="container">
           {/* Filters */}
           <div className="flex flex-wrap gap-2 mb-10">
-            {projectCategories.map((cat) => (
+            <button
+              onClick={() => setActiveCategory("all")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeCategory === "all"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              }`}
+            >
+              Все проекты
+            </button>
+            {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+                onClick={() => setActiveCategory(cat.slug)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeCategory === cat.id
+                  activeCategory === cat.slug
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                 }`}
