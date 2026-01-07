@@ -6,9 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Edit, X, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit, X, Save, FolderTree } from "lucide-react";
+import ProjectCategoriesManagement from "./ProjectCategoriesManagement";
 
 interface Project {
   id: string;
@@ -23,23 +25,25 @@ interface Project {
   created_at: string;
 }
 
-const categoryOptions = [
-  { value: "oil", label: "Нефтегазовая отрасль" },
-  { value: "energy", label: "Энергетика" },
-  { value: "chemical", label: "Химическая промышленность" },
-];
+interface ProjectCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 const ProjectsManagement = () => {
   const queryClient = useQueryClient();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [categories, setCategories] = useState<ProjectCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("projects");
   
   const [formData, setFormData] = useState({
     title: "",
-    category: "oil",
+    category: "",
     year: new Date().getFullYear().toString(),
     description: "",
     details: "",
@@ -53,7 +57,22 @@ const ProjectsManagement = () => {
 
   useEffect(() => {
     fetchProjects();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    const { data, error } = await (supabase as any)
+      .from("project_categories")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (!error && data) {
+      setCategories(data as ProjectCategory[]);
+      if (data.length > 0 && !formData.category) {
+        setFormData(prev => ({ ...prev, category: data[0].slug }));
+      }
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -75,7 +94,7 @@ const ProjectsManagement = () => {
   const resetForm = () => {
     setFormData({
       title: "",
-      category: "oil",
+      category: categories.length > 0 ? categories[0].slug : "",
       year: new Date().getFullYear().toString(),
       description: "",
       details: "",
@@ -210,8 +229,8 @@ const ProjectsManagement = () => {
     }
   };
 
-  const getCategoryName = (value: string) => {
-    return categoryOptions.find((c) => c.value === value)?.label || value;
+  const getCategoryName = (slug: string) => {
+    return categories.find((c) => c.slug === slug)?.name || slug;
   };
 
   if (loading) {
@@ -223,16 +242,28 @@ const ProjectsManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Управление проектами</h3>
-        {!showForm && (
+        <TabsList>
+          <TabsTrigger value="projects">Проекты</TabsTrigger>
+          <TabsTrigger value="categories">
+            <FolderTree className="h-4 w-4 mr-2" />
+            Категории
+          </TabsTrigger>
+        </TabsList>
+        {activeTab === "projects" && !showForm && (
           <Button onClick={() => setShowForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Добавить проект
           </Button>
         )}
       </div>
+
+      <TabsContent value="categories" className="mt-4">
+        <ProjectCategoriesManagement />
+      </TabsContent>
+
+      <TabsContent value="projects" className="mt-4 space-y-6">
 
       {/* Form */}
       {showForm && (
@@ -263,12 +294,12 @@ const ProjectsManagement = () => {
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Выберите категорию" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categoryOptions.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.slug}>
+                        {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -402,7 +433,8 @@ const ProjectsManagement = () => {
           ))
         )}
       </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 };
 
