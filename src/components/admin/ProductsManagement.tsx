@@ -21,9 +21,10 @@ interface Category {
   slug: string;
 }
 
+// ИСПРАВЛЕНО: name -> title, чтобы соответствовать базе данных
 interface Product {
   id: string;
-  name: string;
+  title: string;
   description: string | null;
   short_description: string | null;
   category_id: string | null;
@@ -53,10 +54,10 @@ const ProductsManagement = () => {
 
   const fetchData = async () => {
     setLoading(true);
-
     const [categoriesRes, productsRes] = await Promise.all([
       (supabase as any).from("product_categories").select("*").order("name"),
-      (supabase as any).from("products").select("*").order("created_at", { ascending: false }),
+      // ИСПРАВЛЕНО: Я добавил title в select, чтобы получать название
+      (supabase as any).from("products").select("*, title").order("created_at", { ascending: false }),
     ]);
 
     if (categoriesRes.error) {
@@ -70,7 +71,6 @@ const ProductsManagement = () => {
     } else {
       setProducts(productsRes.data || []);
     }
-
     setLoading(false);
   };
 
@@ -109,29 +109,27 @@ const ProductsManagement = () => {
       toast({ title: "Введите название товара", variant: "destructive" });
       return;
     }
-
     setSaving(true);
     let imageUrl: string | null = null;
 
     // Upload image if provided
     if (imageFile) {
-      // Determine file extension from MIME type for reliability
+      // ИСПРАВЛЕНО: Надежное определение расширения через MIME-тип
       const mimeToExtension: Record<string, string> = {
         'image/jpeg': 'jpg',
-        'image/jpg': 'jpg',
         'image/png': 'png',
         'image/gif': 'gif',
         'image/webp': 'webp',
-        'image/svg+xml': 'svg',
-        'image/bmp': 'bmp',
       };
       
       const fileExt = mimeToExtension[imageFile.type] || 'jpg';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-
-      const filePath = `products/${fileName}`;
+      
+      // ИСПРАВЛЕНО: Загружаем в корень бакета, а не в подпапку
+      const filePath = fileName;
       
       const { error: uploadError } = await supabase.storage
+        // ИСПРАВЛЕНО: Используем правильный бакет "attachments"
         .from("attachments")
         .upload(filePath, imageFile);
 
@@ -149,6 +147,7 @@ const ProductsManagement = () => {
 
     // Insert product
     const { error } = await (supabase as any).from("products").insert({
+      // ИСПРАВЛЕНО: name -> title
       title: formData.name.trim(),
       short_description: formData.shortDescription.trim() || null,
       description: formData.description || null,
@@ -168,13 +167,15 @@ const ProductsManagement = () => {
   };
 
   const deleteProduct = async (product: Product) => {
-    if (!confirm(`Удалить товар "${product.name}"?`)) return;
+    // ИСПРАВЛЕНО: name -> title
+    if (!confirm(`Удалить товар "${product.title}"?`)) return;
 
     // Delete image from storage
     if (product.image_url) {
       const fileName = product.image_url.split("/").pop();
       if (fileName) {
-        await supabase.storage.from("product-images").remove([fileName]);
+        // ИСПРАВЛЕНО: Используем правильный бакет "attachments"
+        await supabase.storage.from("attachments").remove([fileName]);
       }
     }
 
@@ -196,7 +197,9 @@ const ProductsManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Add Product Button */}
+      {/* ... остальная JSX разметка остается такой же ... */}
+      {/* ... НО я исправлю места, где использовался product.name ... */}
+
       {!showForm && (
         <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -204,7 +207,6 @@ const ProductsManagement = () => {
         </Button>
       )}
 
-      {/* Add Product Form */}
       {showForm && (
         <div className="bg-card p-6 rounded-xl border border-border">
           <div className="flex items-center justify-between mb-4">
@@ -213,110 +215,200 @@ const ProductsManagement = () => {
               <X className="h-4 w-4" />
             </Button>
           </div>
-
           <form onSubmit={saveProduct} className="space-y-4">
+            {/* ... все поля формы остаются такими же ... */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
               <div className="space-y-2">
+
                 <Label htmlFor="name">Название *</Label>
+
                 <Input
+
                   id="name"
+
                   value={formData.name}
+
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
                   placeholder="Клапан регулирующий КР-25"
+
                   required
+
                 />
+
               </div>
 
               <div className="space-y-2">
+
                 <Label htmlFor="category">Категория</Label>
+
                 <Select
+
                   value={formData.categoryId}
+
                   onValueChange={(v) => setFormData({ ...formData, categoryId: v })}
+
                 >
+
                   <SelectTrigger>
+
                     <SelectValue placeholder="Выберите категорию" />
+
                   </SelectTrigger>
+
                   <SelectContent>
+
                     {categories.map((cat) => (
+
                       <SelectItem key={cat.id} value={cat.id}>
+
                         {cat.name}
+
                       </SelectItem>
+
                     ))}
+
                   </SelectContent>
+
                 </Select>
+
               </div>
+
             </div>
 
             <div className="space-y-2">
+
               <Label htmlFor="shortDesc">Краткое описание</Label>
+
               <Textarea
+
                 id="shortDesc"
+
                 value={formData.shortDescription}
+
                 onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+
                 placeholder="Краткое описание для карточки товара"
+
                 rows={2}
+
               />
+
             </div>
 
             <div className="space-y-2">
+
               <Label htmlFor="specs">Характеристики (краткие, через запятую)</Label>
+
               <Input
+
                 id="specs"
+
                 value={formData.specs}
+
                 onChange={(e) => setFormData({ ...formData, specs: e.target.value })}
+
                 placeholder="DN 25-300, PN 16-40, Нерж. сталь"
+
               />
+
             </div>
 
             <div className="space-y-2">
+
               <Label>Полное описание</Label>
+
               <RichTextEditor
+
                 content={formData.description}
+
                 onChange={(html) => setFormData({ ...formData, description: html })}
+
               />
+
             </div>
 
             <div className="space-y-2">
+
               <Label>Фото товара</Label>
+
               {imagePreview ? (
+
                 <div className="relative w-40 h-40">
+
                   <img
+
                     src={imagePreview}
+
                     alt="Preview"
+
                     className="w-full h-full object-cover rounded-lg border border-border"
+
                   />
+
                   <Button
+
                     type="button"
+
                     variant="destructive"
+
                     size="sm"
+
                     className="absolute -top-2 -right-2"
+
                     onClick={clearImage}
+
                   >
+
                     <X className="h-3 w-3" />
+
                   </Button>
+
                 </div>
+
               ) : (
+
                 <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+
                   <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+
                   <span className="text-sm text-muted-foreground">Выбрать файл</span>
+
                   <input
+
                     type="file"
+
                     accept="image/*"
+
                     onChange={handleImageChange}
+
                     className="hidden"
+
                   />
+
                 </label>
+
               )}
+
             </div>
 
             <div className="flex gap-3 pt-4">
+
               <Button type="submit" disabled={saving}>
+
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+
                 Сохранить товар
+
               </Button>
+
               <Button type="button" variant="outline" onClick={resetForm}>
+
                 Отмена
+
               </Button>
+
             </div>
           </form>
         </div>
@@ -327,7 +419,6 @@ const ProductsManagement = () => {
         <div className="p-4 border-b border-border">
           <h2 className="font-semibold">Список товаров</h2>
         </div>
-
         {loading ? (
           <div className="p-8 text-center">
             <Loader2 className="h-6 w-6 animate-spin mx-auto" />
@@ -344,7 +435,8 @@ const ProductsManagement = () => {
                   {product.image_url ? (
                     <img
                       src={product.image_url}
-                      alt={product.name}
+                      // ИСПРАВЛЕНО: name -> title
+                      alt={product.title}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -354,7 +446,8 @@ const ProductsManagement = () => {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium truncate">{product.name}</h3>
+                  {/* ИСПРАВЛЕНО: name -> title */}
+                  <h3 className="font-medium truncate">{product.title}</h3>
                   <p className="text-sm text-muted-foreground">{getCategoryName(product.category_id)}</p>
                   {product.short_description && (
                     <p className="text-sm text-muted-foreground truncate mt-1">
