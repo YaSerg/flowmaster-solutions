@@ -9,6 +9,7 @@ import heroImage from "@/assets/hero-valve.jpg";
 import projectRefinery from "@/assets/project-refinery.jpg";
 import projectPowerplant from "@/assets/project-powerplant.jpg";
 import projectChemical from "@/assets/project-chemical.jpg";
+import SafeHTML from "@/components/SafeHTML";
 
 interface PageInfo {
   id: number;
@@ -237,9 +238,9 @@ const Index = () => {
                 О компании
               </h2>
               {pageData?.content ? (
-                <div 
+                <SafeHTML 
+                  html={pageData.content}
                   className="text-muted-foreground text-lg mb-6 leading-relaxed prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: pageData.content }}
                 />
               ) : (
                 <p className="text-muted-foreground text-lg mb-6 leading-relaxed">

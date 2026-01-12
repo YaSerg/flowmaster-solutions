@@ -6,6 +6,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-valve.jpg";
+import SafeHTML from "@/components/SafeHTML";
 
 interface PageInfo {
   id: number;
@@ -118,9 +119,9 @@ const About = () => {
                 На рынке промышленного оборудования с 2021 года
               </h2>
               {displayContent ? (
-                <div 
+                <SafeHTML 
+                  html={displayContent}
                   className="space-y-4 text-muted-foreground leading-relaxed prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: displayContent }}
                 />
               ) : (
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
