@@ -129,9 +129,11 @@ const ProductsManagement = () => {
       const fileExt = mimeToExtension[imageFile.type] || 'jpg';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
+      const filePath = `products/${fileName}`;
+      
       const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(fileName, imageFile);
+        .from("attachments")
+        .upload(filePath, imageFile);
 
       if (uploadError) {
         toast({ title: "Ошибка загрузки фото", description: uploadError.message, variant: "destructive" });
@@ -140,8 +142,8 @@ const ProductsManagement = () => {
       }
 
       const { data: urlData } = supabase.storage
-        .from("product-images")
-        .getPublicUrl(fileName);
+        .from("attachments")
+        .getPublicUrl(filePath);
       imageUrl = urlData.publicUrl;
     }
 
