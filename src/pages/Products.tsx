@@ -14,7 +14,8 @@ interface Category {
 
 interface Product {
   id: string;
-  name: string;
+  // ИСПРАВЛЕНО: name -> title
+  title: string;
   short_description: string | null;
   description: string | null;
   category_id: string | null;
@@ -40,12 +41,15 @@ const Products = () => {
       setLoading(true);
       const [catRes, prodRes] = await Promise.all([
         (supabase as any).from("product_categories").select("*").order("name"),
-        (supabase as any).from("products").select("*").order("name"),
+        // ИСПРАВЛЕНО: order("name") -> order("title")
+        (supabase as any).from("products").select("*").order("title"),
       ]);
+
       setCategories(catRes.data || []);
       setProducts(prodRes.data || []);
       setLoading(false);
     };
+
     fetchData();
   }, []);
 
@@ -131,7 +135,8 @@ const Products = () => {
                     {product.image_url ? (
                       <img
                         src={product.image_url}
-                        alt={product.name}
+                        // ИСПРАВЛЕНО: name -> title
+                        alt={product.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
@@ -142,7 +147,8 @@ const Products = () => {
                   </div>
                   <div className="p-5">
                     <h3 className="text-lg font-display font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                      {product.name}
+                      {/* ИСПРАВЛЕНО: name -> title */}
+                      {product.title}
                     </h3>
                     {product.short_description && (
                       <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
@@ -162,7 +168,8 @@ const Products = () => {
                       </div>
                     )}
                     <Button asChild className="w-full">
-                      <Link to={`/contacts?product=${encodeURIComponent(product.name)}`}>
+                      <Link to={`/contacts?product=${encodeURIComponent(product.title)}`}>
+                        {/* ИСПРАВЛЕНО: encodeURIComponent(product.title) */}
                         Отправить запрос
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
