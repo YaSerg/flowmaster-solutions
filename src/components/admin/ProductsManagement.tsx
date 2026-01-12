@@ -115,7 +115,18 @@ const ProductsManagement = () => {
 
     // Upload image if provided
     if (imageFile) {
-      const fileExt = imageFile.name.split(".").pop();
+      // Determine file extension from MIME type for reliability
+      const mimeToExtension: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/svg+xml': 'svg',
+        'image/bmp': 'bmp',
+      };
+      
+      const fileExt = mimeToExtension[imageFile.type] || 'jpg';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
