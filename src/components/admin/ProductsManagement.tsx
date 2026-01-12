@@ -136,7 +136,7 @@ const ProductsManagement = () => {
 
     // Insert product
     const { error } = await (supabase as any).from("products").insert({
-      name: formData.name.trim(),
+      title: formData.name.trim(),
       short_description: formData.shortDescription.trim() || null,
       description: formData.description || null,
       category_id: formData.categoryId || null,
