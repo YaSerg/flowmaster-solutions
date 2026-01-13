@@ -14,13 +14,13 @@ interface Category {
 
 interface Product {
   id: string;
-  // ИСПРАВЛЕНО: name -> title
   title: string;
   short_description: string | null;
   description: string | null;
   category_id: string | null;
   image_url: string | null;
   specs: string | null;
+  slug: string | null;
 }
 
 const Products = () => {
@@ -127,15 +127,15 @@ const Products = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map((product) => (
-                <div
+                <Link
                   key={product.id}
+                  to={`/products/${product.slug || product.id}`}
                   className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-hover transition-all duration-300"
                 >
                   <div className="aspect-square overflow-hidden bg-muted">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
-                        // ИСПРАВЛЕНО: name -> title
                         alt={product.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -147,7 +147,6 @@ const Products = () => {
                   </div>
                   <div className="p-5">
                     <h3 className="text-lg font-display font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                      {/* ИСПРАВЛЕНО: name -> title */}
                       {product.title}
                     </h3>
                     {product.short_description && (
@@ -167,15 +166,12 @@ const Products = () => {
                         ))}
                       </div>
                     )}
-                    <Button asChild className="w-full">
-                      <Link to={`/contacts?product=${encodeURIComponent(product.title)}`}>
-                        {/* ИСПРАВЛЕНО: encodeURIComponent(product.title) */}
-                        Отправить запрос
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
+                    <Button className="w-full">
+                      Подробнее
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
