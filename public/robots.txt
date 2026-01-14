@@ -1,14 +1,9 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Robots.txt for TDI Valves
+# https://tdi-valves.ru
 
 User-agent: *
 Allow: /
+Disallow: /admin
+
+# Sitemap
+Sitemap: https://nilamwkhlkxtblhlebkb.supabase.co/functions/v1/sitemap
