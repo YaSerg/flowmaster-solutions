@@ -1,9 +1,9 @@
 # Robots.txt for TDI Valves
-# https://tdi-valves.ru
+# https://oootdi.ru
 
 User-agent: *
 Allow: /
 Disallow: /admin
 
 # Sitemap
-Sitemap: https://nilamwkhlkxtblhlebkb.supabase.co/functions/v1/sitemap
+Sitemap: https://oootdi.ru/api/sitemap
