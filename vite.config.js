@@ -1,55 +1,46 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { createSitemap } from 'vite-plugin-sitemap';
-import fetch from 'node-fetch'; // если fetch не доступен, установи: npm i node-fetch
+import { ViteSitemap } from 'vite-plugin-sitemap';
+import fs from 'fs';
 
-// Функция для получения динамических маршрутов из Supabase
-async function getDynamicRoutes() {
-  const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-  const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// динамическая генерация ссылок на продукты
+const products = fs.existsSync('./src/data/products.json')
+  ? JSON.parse(fs.readFileSync('./src/data/products.json', 'utf-8'))
+  : [];
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=slug`, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  const products = await res.json();
-  return products.map((p: { slug: string }) => `/products/${p.slug}`);
-}
+const productPaths = products.map(p => `/products/${p.slug}`);
 
 export default defineConfig({
   plugins: [
     react(),
-    createSitemap({
-      hostname: 'https://oootdi.ru', // твой сайт
-      outDir: 'dist', // куда будет сгенерирован sitemap
-      async routes() {
-        const staticRoutes = ['/', '/about', '/contact', '/products']; // статические страницы
-        const dynamicRoutes = await getDynamicRoutes(); // товары из Supabase
-        return [...staticRoutes, ...dynamicRoutes];
-      },
-    }),
+    ViteSitemap({
+      hostname: 'https://oootdi.ru',
+      routes: [
+        '/',
+        '/about',
+        '/contact',
+        ...productPaths
+      ]
+    })
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src'), // чтобы @/components/... работали
     },
   },
   build: {
     target: 'esnext',
     rollupOptions: {
-      input: path.resolve(__dirname, 'index.html'),
+      input: path.resolve(__dirname, 'index.html'), // относительный путь
     },
   },
   esbuild: {
+    // чтобы сборка не падала на <noscript> в <head>
     jsxInject: `/* empty */`,
   },
   server: {
-    host: true,
+    host: true, // чтобы dev сервер был доступен по IP
     port: 8080,
   },
 });
