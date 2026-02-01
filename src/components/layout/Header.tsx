@@ -2,27 +2,33 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png";
-
-const navItems = [
-  { label: "Главная", href: "/" },
-  { label: "О компании", href: "/about" },
-  { label: "Продукция", href: "/products" },
-  { label: "Проекты", href: "/projects" },
-  { label: "Для поставщиков", href: "/suppliers" },
-  { label: "Контакты", href: "/contacts" },
-];
+import { useHeaderData } from "@/hooks/useSiteDesign";
+import defaultLogo from "@/assets/logo.png";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { data: headerData, isLoading } = useHeaderData();
+
+  const navItems = headerData?.nav_items || [];
+  const phone = headerData?.phone || "+7-996-613-88-52";
+  const ctaText = headerData?.cta_text || "Отправить запрос";
+  const ctaHref = headerData?.cta_href || "/contacts";
+  const logoUrl = headerData?.logo_url || "";
+
+  // Format phone for tel: link
+  const phoneLink = phone.replace(/[^\d+]/g, "");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-card/95 backdrop-blur-md">
       <div className="container flex h-20 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105">
-          <img src={logo} alt="Торговый Дом Импульс" className="h-14 w-auto" />
+          <img 
+            src={logoUrl || defaultLogo} 
+            alt="Торговый Дом Импульс" 
+            className="h-14 w-auto" 
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -45,14 +51,14 @@ const Header = () => {
         {/* Phone & CTA */}
         <div className="hidden lg:flex items-center gap-4">
           <a
-            href="tel:+79966138852"
+            href={`tel:${phoneLink}`}
             className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
           >
             <Phone className="h-4 w-4 text-primary" />
-            +7-996-613-88-52
+            {phone}
           </a>
           <Button asChild size="sm">
-            <Link to="/contacts">Отправить запрос</Link>
+            <Link to={ctaHref}>{ctaText}</Link>
           </Button>
         </div>
 
@@ -86,15 +92,15 @@ const Header = () => {
             ))}
             <div className="mt-4 pt-4 border-t border-border">
               <a
-                href="tel:+79966138852"
+                href={`tel:${phoneLink}`}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-foreground"
               >
                 <Phone className="h-4 w-4 text-primary" />
-                +7-996-613-88-52
+                {phone}
               </a>
               <Button asChild className="w-full mt-3">
-                <Link to="/contacts" onClick={() => setIsOpen(false)}>
-                  Отправить запрос
+                <Link to={ctaHref} onClick={() => setIsOpen(false)}>
+                  {ctaText}
                 </Link>
               </Button>
             </div>

@@ -10,12 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import { 
   LogOut, Trash2, Download, RefreshCw, Eye, Lock, Loader2, 
-  Search, Users, Plus, X, RotateCcw, Archive, Package, FolderTree, FileText, Briefcase
+  Search, Users, Plus, X, RotateCcw, Archive, Package, FolderTree, FileText, Briefcase, Palette
 } from "lucide-react";
 import CategoriesManagement from "@/components/admin/CategoriesManagement";
 import ProductsManagement from "@/components/admin/ProductsManagement";
 import PagesContentManagement from "@/components/admin/PagesContentManagement";
 import ProjectsManagement from "@/components/admin/ProjectsManagement";
+import DesignManagement from "@/components/admin/DesignManagement";
 
 interface Lead {
   id: string;
@@ -69,7 +70,7 @@ const Admin = () => {
   const [activeLeadsTab, setActiveLeadsTab] = useState<"active" | "deleted">("active");
 
   // Main navigation tab
-  const [mainTab, setMainTab] = useState<"leads" | "categories" | "products" | "projects" | "content">("leads");
+  const [mainTab, setMainTab] = useState<"leads" | "categories" | "products" | "projects" | "content" | "design">("leads");
 
   // Search/filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -622,6 +623,10 @@ const Admin = () => {
                   <Briefcase className="h-4 w-4" />
                   Проекты
                 </TabsTrigger>
+                <TabsTrigger value="design" className="gap-2">
+                  <Palette className="h-4 w-4" />
+                  Дизайн
+                </TabsTrigger>
               </>
             )}
           </TabsList>
@@ -932,6 +937,11 @@ const Admin = () => {
           {/* Projects Tab */}
           <TabsContent value="projects">
             <ProjectsManagement />
+          </TabsContent>
+
+          {/* Design Tab */}
+          <TabsContent value="design">
+            <DesignManagement />
           </TabsContent>
         </Tabs>
 
