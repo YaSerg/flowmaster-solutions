@@ -1,32 +1,52 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { ViteSitemap } from 'vite-plugin-sitemap';
 import fs from 'fs';
 
-// динамическая генерация ссылок на продукты
-const products = fs.existsSync('./src/data/products.json')
-  ? JSON.parse(fs.readFileSync('./src/data/products.json', 'utf-8'))
-  : [];
+// Генерация sitemap
+function generateSitemap() {
+  const productPaths = [
+    '/products/control-valves-krzd',
+    '/products/disk-type-axial-control-isolation-valves-krzdo',
+    '/products/fast-acting-cutoff-valves-KOM',
+    '/products/control-valves-RK',
+    '/products/control-valves-KNP',
+    '/products/fast-acting-cutoff-valves-KOG',
+  ];
 
-const productPaths = products.map(p => `/products/${p.slug}`);
+  return {
+    name: 'generate-sitemap',
+    closeBundle() {
+      const staticRoutes = ['/', '/about', '/suppliers', '/contacts'];
+      const allRoutes = [...staticRoutes, ...productPaths];
+
+      const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allRoutes
+  .map(
+    (url) => `<url>
+  <loc>https://oootdi.ru${url}</loc>
+  <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+  <changefreq>weekly</changefreq>
+</url>`
+  )
+  .join('\n')}
+</urlset>`;
+
+      fs.writeFileSync(path.resolve(__dirname, 'dist/sitemap.xml'), sitemapContent);
+      console.log('Sitemap generated ✅');
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
     react(),
-    ViteSitemap({
-      hostname: 'https://oootdi.ru',
-      routes: [
-        '/',
-        '/about',
-        '/contact',
-        ...productPaths
-      ]
-    })
+    generateSitemap(),
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'), // чтобы @/components/... работали
+      '@': path.resolve(__dirname, 'src'), // @/components/... работает
     },
   },
   build: {
@@ -36,11 +56,10 @@ export default defineConfig({
     },
   },
   esbuild: {
-    // чтобы сборка не падала на <noscript> в <head>
-    jsxInject: `/* empty */`,
+    jsxInject: `/* empty */`, // чтобы сборка не падала на <noscript>
   },
   server: {
-    host: true, // чтобы dev сервер был доступен по IP
+    host: true, // dev сервер доступен по IP
     port: 8080,
   },
 });
