@@ -10,9 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import { 
   LogOut, Trash2, Download, RefreshCw, Eye, Lock, Loader2, 
-  Search, Users, Plus, X, RotateCcw, Archive, Package, FolderTree, FileText, Briefcase, Palette
+  Search, Users, Plus, X, RotateCcw, Archive, Package, FileText, Briefcase, Palette
 } from "lucide-react";
-import CategoriesManagement from "@/components/admin/CategoriesManagement";
 import ProductsManagement from "@/components/admin/ProductsManagement";
 import PagesContentManagement from "@/components/admin/PagesContentManagement";
 import ProjectsManagement from "@/components/admin/ProjectsManagement";
@@ -70,7 +69,7 @@ const Admin = () => {
   const [activeLeadsTab, setActiveLeadsTab] = useState<"active" | "deleted">("active");
 
   // Main navigation tab
-  const [mainTab, setMainTab] = useState<"leads" | "categories" | "products" | "projects" | "content" | "design">("leads");
+  const [mainTab, setMainTab] = useState<"leads" | "products" | "projects" | "content" | "design">("leads");
 
   // Search/filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -607,10 +606,6 @@ const Admin = () => {
             </TabsTrigger>
             {isMainAdmin && (
               <>
-                <TabsTrigger value="categories" className="gap-2">
-                  <FolderTree className="h-4 w-4" />
-                  Категории
-                </TabsTrigger>
                 <TabsTrigger value="products" className="gap-2">
                   <Package className="h-4 w-4" />
                   Товары
@@ -919,10 +914,6 @@ const Admin = () => {
             </Tabs>
           </TabsContent>
 
-          {/* Categories Tab */}
-          <TabsContent value="categories">
-            <CategoriesManagement />
-          </TabsContent>
 
           {/* Products Tab */}
           <TabsContent value="products">

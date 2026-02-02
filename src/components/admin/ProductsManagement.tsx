@@ -11,9 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, ImageIcon, X, Pencil, Images } from "lucide-react";
+import { Loader2, Plus, Trash2, ImageIcon, X, Pencil, Images, FolderTree, Package } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
+import CategoriesManagement from "./CategoriesManagement";
 
 interface Category {
   id: string;
@@ -393,13 +395,25 @@ const ProductsManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {!showForm && (
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Добавить товар
-        </Button>
-      )}
+    <Tabs defaultValue="products" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="products" className="gap-2">
+          <Package className="h-4 w-4" />
+          Список товаров
+        </TabsTrigger>
+        <TabsTrigger value="categories" className="gap-2">
+          <FolderTree className="h-4 w-4" />
+          Категории
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="products" className="space-y-6">
+        {!showForm && (
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Добавить товар
+          </Button>
+        )}
 
       {showForm && (
         <div className="bg-card p-6 rounded-xl border border-border">
@@ -680,7 +694,12 @@ const ProductsManagement = () => {
           </div>
         )}
       </div>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="categories">
+        <CategoriesManagement />
+      </TabsContent>
+    </Tabs>
   );
 };
 
