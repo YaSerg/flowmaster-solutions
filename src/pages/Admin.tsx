@@ -10,12 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 import { 
   LogOut, Trash2, Download, RefreshCw, Eye, Lock, Loader2, 
-  Search, Users, Plus, X, RotateCcw, Archive, Package, FileText, Briefcase, Palette
+  Search, Users, Plus, X, RotateCcw, Archive, Package, FileText, Briefcase, Palette, Newspaper
 } from "lucide-react";
 import ProductsManagement from "@/components/admin/ProductsManagement";
 import PagesContentManagement from "@/components/admin/PagesContentManagement";
 import ProjectsManagement from "@/components/admin/ProjectsManagement";
 import DesignManagement from "@/components/admin/DesignManagement";
+import NewsManagement from "@/components/admin/NewsManagement";
 
 interface Lead {
   id: string;
@@ -69,7 +70,7 @@ const Admin = () => {
   const [activeLeadsTab, setActiveLeadsTab] = useState<"active" | "deleted">("active");
 
   // Main navigation tab
-  const [mainTab, setMainTab] = useState<"leads" | "products" | "projects" | "content" | "design">("leads");
+  const [mainTab, setMainTab] = useState<"leads" | "products" | "projects" | "content" | "design" | "news">("leads");
 
   // Search/filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -618,6 +619,10 @@ const Admin = () => {
                   <Briefcase className="h-4 w-4" />
                   Проекты
                 </TabsTrigger>
+                <TabsTrigger value="news" className="gap-2">
+                  <Newspaper className="h-4 w-4" />
+                  Новости
+                </TabsTrigger>
                 <TabsTrigger value="design" className="gap-2">
                   <Palette className="h-4 w-4" />
                   Дизайн
@@ -928,6 +933,11 @@ const Admin = () => {
           {/* Projects Tab */}
           <TabsContent value="projects">
             <ProjectsManagement />
+          </TabsContent>
+
+          {/* News Tab */}
+          <TabsContent value="news">
+            <NewsManagement />
           </TabsContent>
 
           {/* Design Tab */}
