@@ -10,6 +10,7 @@ import projectRefinery from "@/assets/project-refinery.jpg";
 import projectPowerplant from "@/assets/project-powerplant.jpg";
 import projectChemical from "@/assets/project-chemical.jpg";
 import SafeHTML from "@/components/SafeHTML";
+import DynamicNewsBlock from "@/components/blocks/DynamicNewsBlock";
 
 interface PageInfo {
   id: number;
@@ -89,23 +90,6 @@ const features = [
   },
 ];
 
-const news = [
-  {
-    date: "18 декабря 2024",
-    title: "Расширение складских мощностей",
-    description: "Открытие нового склада в Московской области площадью 5000 м²",
-  },
-  {
-    date: "5 декабря 2024",
-    title: "Сертификация ISO 9001:2015",
-    description: "Компания успешно прошла ресертификацию системы менеджмента качества",
-  },
-  {
-    date: "22 ноября 2024",
-    title: "Участие в выставке НЕФТЕГАЗ-2024",
-    description: "Представили новую линейку регулирующих клапанов высокого давления",
-  },
-];
 
 const Index = () => {
   const { data: pageData, isLoading } = useQuery({
@@ -354,33 +338,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* News Section */}
-      <section className="py-16 lg:py-24 bg-muted">
-        <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              Новости компании
-            </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            {news.map((item, index) => (
-              <article
-                key={index}
-                className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-hover"
-              >
-                <time className="text-sm text-primary font-medium">{item.date}</time>
-                <h3 className="text-lg font-display font-semibold text-foreground mt-2 mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {item.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Dynamic News Section */}
+      <DynamicNewsBlock />
 
       {/* CTA Section */}
       <section className="py-16 lg:py-20 bg-secondary">
