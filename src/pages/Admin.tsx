@@ -13,7 +13,7 @@ import {
   Search, Users, Plus, X, RotateCcw, Archive, Package, FileText, Briefcase, Palette, Newspaper
 } from "lucide-react";
 import ProductsManagement from "@/components/admin/ProductsManagement";
-import PagesContentManagement from "@/components/admin/PagesContentManagement";
+import BlockBasedContentManagement from "@/components/admin/BlockBasedContentManagement";
 import ProjectsManagement from "@/components/admin/ProjectsManagement";
 import DesignManagement from "@/components/admin/DesignManagement";
 import NewsManagement from "@/components/admin/NewsManagement";
@@ -927,7 +927,7 @@ const Admin = () => {
 
           {/* Site Content Tab */}
           <TabsContent value="content">
-            <PagesContentManagement />
+            <BlockBasedContentManagement />
           </TabsContent>
 
           {/* Projects Tab */}
