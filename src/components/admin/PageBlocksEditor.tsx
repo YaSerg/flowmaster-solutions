@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2,
   Save,
@@ -22,6 +23,8 @@ import {
   CheckSquare,
   Footprints,
   Newspaper,
+  FolderKanban,
+  Upload,
 } from "lucide-react";
 import {
   Select,
@@ -39,6 +42,13 @@ import {
 import RichTextEditor from "./RichTextEditor";
 import { BlockData, PageBlocks } from "@/components/blocks/BlockRenderer";
 
+// Available Lucide icons for features
+const AVAILABLE_ICONS = [
+  "Award", "Truck", "Shield", "Users", "Star", "CheckCircle", "Settings", 
+  "Zap", "Heart", "Target", "Clock", "Globe", "Lock", "Briefcase",
+  "Package", "BarChart", "Layers", "Database", "Server", "Cpu",
+];
+
 const BLOCK_TYPES = [
   { value: "hero", label: "Баннер (Hero)", icon: Image },
   { value: "text", label: "Текстовый блок", icon: Type },
@@ -50,6 +60,7 @@ const BLOCK_TYPES = [
   { value: "checklist", label: "Чек-лист", icon: CheckSquare },
   { value: "steps", label: "Шаги процесса", icon: Footprints },
   { value: "dynamic_news", label: "Блок новостей", icon: Newspaper },
+  { value: "dynamic_projects", label: "Блок проектов", icon: FolderKanban },
 ];
 
 const generateBlockId = () => `block_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -57,7 +68,7 @@ const generateBlockId = () => `block_${Date.now()}_${Math.random().toString(36).
 const getDefaultBlockData = (type: string): Record<string, any> => {
   switch (type) {
     case "hero":
-      return { title: "Заголовок", subtitle: "", cta_text: "", cta_href: "" };
+      return { title: "Заголовок", subtitle: "", cta_text: "", cta_href: "", bg_image: "" };
     case "text":
       return { title: "", content: "", centered: false, max_width: "4xl" };
     case "features":
@@ -76,6 +87,8 @@ const getDefaultBlockData = (type: string): Record<string, any> => {
       return { title: "", steps: [] };
     case "dynamic_news":
       return { title: "Новости компании", subtitle: "", count: 3 };
+    case "dynamic_projects":
+      return { title: "Наши проекты", subtitle: "", count: 3, show_link: true };
     default:
       return {};
   }
@@ -336,6 +349,31 @@ const BlockEditor = ({ block, onChange }: { block: BlockData; onChange: (data: R
 
   switch (type) {
     case "hero":
+      return <HeroBlockEditor data={data} onChange={onChange} />;
+
+    case "text":
+      return (
+        <div className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label>Заголовок (необязательно)</Label>
+            <Input value={data.title || ""} onChange={(e) => onChange({ title: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Контент</Label>
+            <RichTextEditor content={data.content || ""} onChange={(html) => onChange({ content: html })} />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="centered" 
+              checked={data.centered || false}
+              onCheckedChange={(checked) => onChange({ centered: checked })}
+            />
+            <Label htmlFor="centered">Выравнивание по центру</Label>
+          </div>
+        </div>
+      );
+
+    case "cta":
       return (
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
@@ -359,16 +397,64 @@ const BlockEditor = ({ block, onChange }: { block: BlockData; onChange: (data: R
         </div>
       );
 
-    case "text":
+    case "dynamic_news":
       return (
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label>Заголовок (необязательно)</Label>
+            <Label>Заголовок секции</Label>
             <Input value={data.title || ""} onChange={(e) => onChange({ title: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>Контент</Label>
-            <RichTextEditor content={data.content || ""} onChange={(html) => onChange({ content: html })} />
+            <Label>Подзаголовок</Label>
+            <Input value={data.subtitle || ""} onChange={(e) => onChange({ subtitle: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Количество новостей</Label>
+            <Select value={String(data.count || 3)} onValueChange={(v) => onChange({ count: parseInt(v) })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3 новости</SelectItem>
+                <SelectItem value="4">4 новости</SelectItem>
+                <SelectItem value="6">6 новостей</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      );
+
+    case "dynamic_projects":
+      return (
+        <div className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label>Заголовок секции</Label>
+            <Input value={data.title || ""} onChange={(e) => onChange({ title: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Подзаголовок</Label>
+            <Input value={data.subtitle || ""} onChange={(e) => onChange({ subtitle: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Количество проектов</Label>
+            <Select value={String(data.count || 3)} onValueChange={(v) => onChange({ count: parseInt(v) })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3 проекта</SelectItem>
+                <SelectItem value="4">4 проекта</SelectItem>
+                <SelectItem value="6">6 проектов</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="show_link" 
+              checked={data.show_link !== false}
+              onCheckedChange={(checked) => onChange({ show_link: checked })}
+            />
+            <Label htmlFor="show_link">Показать ссылку "Все проекты"</Label>
           </div>
         </div>
       );
@@ -452,12 +538,112 @@ const BlockEditor = ({ block, onChange }: { block: BlockData; onChange: (data: R
   }
 };
 
-// Features block editor
+// Helper function to upload image
+const uploadImage = async (file: File, folder: string): Promise<string | null> => {
+  const ext = file.type.split('/')[1] || 'jpg';
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
+  
+  const { error } = await supabase.storage
+    .from('attachments')
+    .upload(fileName, file);
+  
+  if (error) {
+    console.error('Upload error:', error);
+    return null;
+  }
+  
+  const { data: urlData } = supabase.storage
+    .from('attachments')
+    .getPublicUrl(fileName);
+  
+  return urlData.publicUrl;
+};
+
+// Hero block editor with background image
+const HeroBlockEditor = ({ data, onChange }: { data: Record<string, any>; onChange: (d: Record<string, any>) => void }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const url = await uploadImage(file, 'hero');
+    setUploading(false);
+
+    if (url) {
+      onChange({ bg_image: url });
+      toast({ title: "Изображение загружено" });
+    } else {
+      toast({ title: "Ошибка загрузки", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="space-y-4 pt-4">
+      <div className="space-y-2">
+        <Label>Заголовок</Label>
+        <Input value={data.title || ""} onChange={(e) => onChange({ title: e.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <Label>Подзаголовок</Label>
+        <Textarea value={data.subtitle || ""} onChange={(e) => onChange({ subtitle: e.target.value })} rows={2} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Текст кнопки</Label>
+          <Input value={data.cta_text || ""} onChange={(e) => onChange({ cta_text: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label>Ссылка кнопки</Label>
+          <Input value={data.cta_href || ""} onChange={(e) => onChange({ cta_href: e.target.value })} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Фоновое изображение (по умолчанию: стандартное)</Label>
+        <div className="flex gap-2">
+          <Input 
+            value={data.bg_image || ""} 
+            onChange={(e) => onChange({ bg_image: e.target.value })} 
+            placeholder="URL изображения или загрузите файл"
+          />
+          <Button 
+            variant="outline" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+        </div>
+        {data.bg_image && (
+          <div className="mt-2">
+            <img src={data.bg_image} alt="Preview" className="h-20 w-40 object-cover rounded" />
+            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => onChange({ bg_image: "" })}>
+              Удалить
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Features block editor with icon selection and image upload
 const FeaturesBlockEditor = ({ data, onChange }: { data: Record<string, any>; onChange: (d: Record<string, any>) => void }) => {
   const features = data.features || [];
+  const { toast } = useToast();
 
   const addFeature = () => {
-    onChange({ features: [...features, { icon: "Star", title: "", description: "" }] });
+    onChange({ features: [...features, { icon: "Award", title: "", description: "" }] });
   };
 
   const updateFeature = (index: number, field: string, value: string) => {
@@ -468,6 +654,16 @@ const FeaturesBlockEditor = ({ data, onChange }: { data: Record<string, any>; on
 
   const removeFeature = (index: number) => {
     onChange({ features: features.filter((_: any, i: number) => i !== index) });
+  };
+
+  const handleFeatureImageUpload = async (index: number, file: File) => {
+    const url = await uploadImage(file, 'features');
+    if (url) {
+      updateFeature(index, 'icon', url);
+      toast({ title: "Изображение загружено" });
+    } else {
+      toast({ title: "Ошибка загрузки", variant: "destructive" });
+    }
   };
 
   return (
@@ -485,33 +681,76 @@ const FeaturesBlockEditor = ({ data, onChange }: { data: Record<string, any>; on
       
       <div className="space-y-3">
         <Label>Карточки ({features.length})</Label>
-        {features.map((feature: any, index: number) => (
-          <div key={index} className="p-3 border border-border rounded-lg space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Карточка #{index + 1}</span>
-              <Button variant="ghost" size="sm" onClick={() => removeFeature(index)}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+        {features.map((feature: any, index: number) => {
+          const isImageUrl = feature.icon && (feature.icon.startsWith('http') || feature.icon.startsWith('/'));
+          
+          return (
+            <div key={index} className="p-3 border border-border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Карточка #{index + 1}</span>
+                <Button variant="ghost" size="sm" onClick={() => removeFeature(index)}>
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-xs">Иконка / Изображение</Label>
+                <div className="flex gap-2 items-center">
+                  <Select 
+                    value={isImageUrl ? "custom" : (feature.icon || "")} 
+                    onValueChange={(v) => {
+                      if (v !== "custom") {
+                        updateFeature(index, "icon", v);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Выберите иконку" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {AVAILABLE_ICONS.map((icon) => (
+                        <SelectItem key={icon} value={icon}>{icon}</SelectItem>
+                      ))}
+                      <SelectItem value="custom">Своё изображение</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFeatureImageUpload(index, file);
+                      }}
+                    />
+                    <Button variant="outline" size="sm" asChild>
+                      <span><Upload className="h-4 w-4 mr-1" /> Загрузить</span>
+                    </Button>
+                  </label>
+                  
+                  {isImageUrl && (
+                    <img src={feature.icon} alt="" className="h-8 w-8 object-cover rounded" />
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Заголовок"
+                  value={feature.title || ""}
+                  onChange={(e) => updateFeature(index, "title", e.target.value)}
+                />
+                <Input
+                  placeholder="Описание"
+                  value={feature.description || ""}
+                  onChange={(e) => updateFeature(index, "description", e.target.value)}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Input
-                placeholder="Иконка (напр. Star)"
-                value={feature.icon || ""}
-                onChange={(e) => updateFeature(index, "icon", e.target.value)}
-              />
-              <Input
-                placeholder="Заголовок"
-                value={feature.title || ""}
-                onChange={(e) => updateFeature(index, "title", e.target.value)}
-              />
-              <Input
-                placeholder="Описание"
-                value={feature.description || ""}
-                onChange={(e) => updateFeature(index, "description", e.target.value)}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <Button variant="outline" size="sm" onClick={addFeature}>
           <Plus className="h-4 w-4 mr-2" /> Добавить карточку
         </Button>
