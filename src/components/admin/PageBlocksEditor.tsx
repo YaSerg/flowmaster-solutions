@@ -46,7 +46,7 @@ import { BlockData, PageBlocks } from "@/components/blocks/BlockRenderer";
 const AVAILABLE_ICONS = [
   "Award", "Truck", "Shield", "Users", "Star", "CheckCircle", "Settings", 
   "Zap", "Heart", "Target", "Clock", "Globe", "Lock", "Briefcase",
-  "Package", "BarChart", "Layers", "Database", "Server", "Cpu",
+  "Package", "BarChart", "Layers", "Database", "Server", "Cpu", "Wrench",
 ];
 
 const BLOCK_TYPES = [

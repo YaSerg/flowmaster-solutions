@@ -27,14 +27,14 @@ const HeroBlock = ({ data }: { data: Record<string, any> }) => {
   const bgImage = data.bg_image || heroValveDefault;
   
   return (
-    <section className="relative py-12 lg:py-16 overflow-hidden">
+    <section className="relative py-20 lg:py-28 overflow-hidden">
       {/* Background image */}
       <div 
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${bgImage})` }}
       />
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-primary/80" />
+      {/* Gradient overlay matching original design */}
+      <div className="absolute inset-0 bg-gradient-hero opacity-90" />
       <div className="container relative z-10">
         <div className="max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-6">
@@ -62,7 +62,7 @@ const HeroBlock = ({ data }: { data: Record<string, any> }) => {
 };
 
 const TextBlock = ({ data }: { data: Record<string, any> }) => (
-  <section className={`py-8 lg:py-14 ${data.bg_color || "bg-background"}`}>
+  <section className={`py-6 lg:py-10 ${data.bg_color || "bg-background"}`}>
     <div className="container">
       <div className={`max-w-4xl ${data.centered ? "mx-auto text-center" : ""}`}>
         {data.title && (
@@ -86,10 +86,10 @@ const FeaturesBlock = ({ data }: { data: Record<string, any> }) => {
   const columns = data.columns || 4;
   
   return (
-    <section className={`py-11 lg:py-16 ${data.bg_color || "bg-muted"}`}>
+    <section className={`py-8 lg:py-11 ${data.bg_color || "bg-muted"}`}>
       <div className="container">
         {(data.title || data.subtitle) && (
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             {data.title && (
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
                 {data.title}
@@ -137,7 +137,7 @@ const FeaturesBlock = ({ data }: { data: Record<string, any> }) => {
 };
 
 const ImageTextBlock = ({ data }: { data: Record<string, any> }) => (
-  <section className={`py-11 lg:py-16 ${data.bg_color || "bg-background"}`}>
+  <section className={`py-8 lg:py-11 ${data.bg_color || "bg-background"}`}>
     <div className="container">
       <div className={`grid lg:grid-cols-2 gap-8 lg:gap-12 items-center ${data.reverse ? "lg:flex-row-reverse" : ""}`}>
         <div className={data.reverse ? "lg:order-2" : ""}>
@@ -188,10 +188,10 @@ const TimelineBlock = ({ data }: { data: Record<string, any> }) => {
   const milestones = data.milestones || [];
   
   return (
-    <section className={`py-11 lg:py-16 ${data.bg_color || "bg-background"}`}>
+    <section className={`py-8 lg:py-11 ${data.bg_color || "bg-background"}`}>
       <div className="container">
         {data.title && (
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
               {data.title}
             </h2>
@@ -224,7 +224,7 @@ const TimelineBlock = ({ data }: { data: Record<string, any> }) => {
 };
 
 const CTABlock = ({ data }: { data: Record<string, any> }) => (
-  <section className={`py-11 ${data.bg_color || "bg-secondary"}`}>
+  <section className={`py-8 ${data.bg_color || "bg-secondary"}`}>
     <div className="container text-center">
       {data.title && (
         <h2 className="text-2xl md:text-3xl font-display font-bold text-secondary-foreground mb-4">
@@ -253,10 +253,10 @@ const NumberedCardsBlock = ({ data }: { data: Record<string, any> }) => {
   const columns = data.columns || 3;
   
   return (
-    <section className={`py-11 lg:py-16 ${data.bg_color || "bg-muted"}`}>
+    <section className={`py-8 lg:py-11 ${data.bg_color || "bg-muted"}`}>
       <div className="container">
         {data.title && (
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
               {data.title}
             </h2>
@@ -287,7 +287,7 @@ const ChecklistBlock = ({ data }: { data: Record<string, any> }) => {
   const items = data.items || [];
   
   return (
-    <section className={`py-11 lg:py-16 ${data.bg_color || "bg-background"}`}>
+    <section className={`py-8 lg:py-11 ${data.bg_color || "bg-background"}`}>
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
           <div>
@@ -342,10 +342,10 @@ const StepsBlock = ({ data }: { data: Record<string, any> }) => {
   const steps = data.steps || [];
   
   return (
-    <section className={`py-11 lg:py-16 ${data.bg_color || "bg-muted"}`}>
+    <section className={`py-8 lg:py-11 ${data.bg_color || "bg-muted"}`}>
       <div className="container">
         {data.title && (
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
               {data.title}
             </h2>
@@ -382,6 +382,13 @@ const DynamicNewsBlockWrapper = ({ data }: { data: Record<string, any> }) => (
 const DynamicProjectsBlock = ({ data }: { data: Record<string, any> }) => {
   const count = data.count || 3;
   
+  // Fallback project images when none in DB
+  const fallbackImages = [
+    "https://images.unsplash.com/photo-1518709766631-a6a7f45921c3?w=600&q=80",
+    "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80",
+    "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=600&q=80",
+  ];
+
   const { data: projects, isLoading } = useQuery({
     queryKey: ["recent-projects", count],
     queryFn: async () => {
@@ -398,7 +405,7 @@ const DynamicProjectsBlock = ({ data }: { data: Record<string, any> }) => {
 
   if (isLoading) {
     return (
-      <section className="py-11 lg:py-16 bg-muted">
+      <section className="py-8 lg:py-11 bg-muted">
         <div className="container text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
         </div>
@@ -411,10 +418,10 @@ const DynamicProjectsBlock = ({ data }: { data: Record<string, any> }) => {
   }
 
   return (
-    <section className={`py-11 lg:py-16 ${data.bg_color || "bg-muted"}`}>
+    <section className={`py-8 lg:py-11 ${data.bg_color || "bg-muted"}`}>
       <div className="container">
         {(data.title || data.subtitle) && (
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             {data.title && (
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
                 {data.title}
@@ -429,17 +436,17 @@ const DynamicProjectsBlock = ({ data }: { data: Record<string, any> }) => {
         )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project: any) => (
-            <div key={project.id} className="bg-card rounded-xl overflow-hidden shadow-card hover:shadow-hover transition-all">
-              {project.image_url && (
+          {projects.map((project: any, index: number) => {
+            const projectImage = project.image_url || fallbackImages[index % fallbackImages.length];
+            return (
+              <div key={project.id} className="bg-card rounded-xl overflow-hidden shadow-card hover:shadow-hover transition-all">
                 <div className="aspect-video overflow-hidden">
                   <img 
-                    src={project.image_url} 
+                    src={projectImage} 
                     alt={project.title}
                     className="w-full h-full object-cover"
                   />
                 </div>
-              )}
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
@@ -455,7 +462,8 @@ const DynamicProjectsBlock = ({ data }: { data: Record<string, any> }) => {
                 </p>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         
         {data.show_link && (
